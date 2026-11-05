@@ -2,12 +2,12 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0d1117">
-<meta name="description" content="Free web app that generates a starting tuning setup for Gran Turismo 7, with PP planning and live under/oversteer feedback. English and Italian.">
+<meta name="description" content="Setup Lab: free tuning tool designed for Gran Turismo 7, with PP planning and live under/oversteer feedback. English and Italian.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>html,body{margin:0;min-height:100%}body{font-family:system-ui,sans-serif}</style>
-<title>GT7 Setup Lab</title>
+<title>Setup Lab</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: phone-first, three tabs (Auto / Setup / Guida); Setup tab has a sticky live-effects panel above grouped steppers. */
@@ -87,7 +87,6 @@ header.top .lang {
   }
 }
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.carname{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:-6px 0 12px}
 nav.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;margin-bottom:16px}
 nav.tabs button{background:none;border:0;border-radius:7px;padding:10px 6px;font-family:var(--display);font-size:17px;letter-spacing:.04em;text-transform:uppercase;font-weight:600;color:var(--muted);cursor:pointer}
 nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
@@ -96,7 +95,7 @@ nav.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accen
 h2{font-family:var(--display);font-size:20px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 12px;font-weight:600}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .grid .full{grid-column:1/-1}
-label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;min-width:0}
+label.f,div.f{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;min-width:0}
 input[type=text],input[type=number],select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:16px;color:var(--fg);width:100%;min-width:0;text-transform:none;letter-spacing:0}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:14px}
@@ -160,7 +159,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .mrow .btn{flex:1 1 140px}
 .mstat{font-size:13px;color:var(--muted);margin:6px 0 0}
 .lay{display:flex;gap:6px;flex-wrap:wrap}
-.lay .chip{min-width:56px;text-align:center;font-family:var(--mono);font-weight:600}
+.lay .chip{min-width:0;flex:1 1 0;padding-left:8px;padding-right:8px;text-align:center;font-family:var(--mono);font-weight:600}
 .u{display:flex;gap:6px}.u input{flex:1;min-width:0}.u select{flex:none;width:auto}
 table.sum{width:100%;border-collapse:collapse;font-size:13px}table.sum td,table.sum th{padding:4px 6px;border-bottom:1px solid var(--line);text-align:right}table.sum td:first-child,table.sum th:first-child{text-align:left}
 .onb{border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
@@ -206,6 +205,29 @@ textarea{width:100%;margin-top:10px;background:var(--panel2);border:1px solid va
 .foot span{font-family:var(--mono)}
 @media (prefers-reduced-motion:reduce){.meter i{transition:none}}
 @media (max-width:380px){.pair{grid-template-columns:1fr}.fxgrid{grid-template-columns:1fr}}
+
+/* tab sempre visibile in basso */
+nav.tabs{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:760px;z-index:15;margin:0;border-radius:14px 14px 0 0;border-width:1px 1px 0;box-shadow:0 -6px 18px rgba(0,0,0,.25);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));background:var(--panel)}
+body{padding-bottom:96px}
+.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.row-c,.mrow{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.row-c .btn,.mrow .btn{flex:0 1 auto;width:auto;min-width:150px;padding:11px 18px;font-size:16px}
+.mrow{margin-top:12px}
+.mrow .btn#measure{font-size:18px}
+.carname{font-family:var(--display);font-size:21px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--fg);border-left:4px solid var(--accent);padding:2px 0 2px 12px;margin:-4px 0 14px}
+.carname:empty{display:none}
+.st .lab em{white-space:nowrap;font-style:normal;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.wfrow{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-top:4px}
+.wfb{display:flex;flex-direction:column;align-items:center;gap:2px}.wfb small{font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.stp{display:flex;align-items:stretch}.stp input{width:54px;text-align:center;border-radius:0;min-width:0}
+.stp button{background:var(--panel2);border:1px solid var(--line);color:var(--fg);width:36px;font-size:20px;cursor:pointer}
+.stp button:first-child{border-radius:8px 0 0 8px}.stp button:last-child{border-radius:0 8px 8px 0}
+.colon{font-size:24px;padding-bottom:4px}
+em.sc{display:block;font-style:normal;font-size:12px;color:var(--accent);min-height:16px;margin-top:2px}
+div.f>span:first-child{display:block}
+.f.full .lay{margin-top:2px}
+.stp input{width:64px;padding-left:4px;padding-right:4px}
+.u input{width:0;flex:1 1 56px;padding-left:10px;padding-right:6px}.u select{flex:0 0 84px;width:84px;padding-left:8px;padding-right:18px}
 </style>
 </head><body>
 <div class="wrap">
@@ -219,7 +241,7 @@ textarea{width:100%;margin-top:10px;background:var(--panel2);border:1px solid va
   </div>
 
 </header>
-<h1 class="sr">GT7 Setup Lab</h1>
+<h1 class="sr">Setup Lab</h1>
 <div class="carname" id="hdrCar"></div>
 <nav class="tabs" role="tablist">
   <button role="tab" id="t-auto" aria-controls="tab-auto" aria-selected="true" data-tab="auto">Auto</button>
@@ -229,32 +251,32 @@ textarea{width:100%;margin-top:10px;background:var(--panel2);border:1px solid va
 </nav>
 
 <section id="tab-auto" role="tabpanel" aria-labelledby="t-auto">
-  <div class="onb" id="onb" hidden><button type="button" class="btn ghost" id="onbX" style="padding:2px 10px;min-height:0">OK</button><b>Come si usa.</b> 1) Compila Auto e tocca Genera setup. 2) Nel gioco imposta i valori mostrati e tocca Misura. 3) Prova, correggi con le Correzioni rapide o gli slider e confronta con la Misura.</div>
+  <div class="onb" id="onb" hidden><button type="button" class="btn ghost" id="onbX" style="padding:2px 10px;min-height:0">OK</button><b>Come si usa.</b> 1) Compila Auto e tocca Genera setup. 2) Imposta in auto i valori mostrati e tocca Misura. 3) Prova, correggi con le Correzioni rapide o gli slider e confronta con la Misura.</div>
   <div class="card">
     <h2>Vettura</h2>
     <p class="note">Valori di esempio per una FR leggera. Sostituiscili con i dati della tua auto (schermata Informazioni e Officina).</p>
     <div class="grid">
       <label class="f full">Nome<input type="text" id="carName" value="Esempio FR leggera"></label>
-      <div class="f full"><span>Layout (come nel gioco)</span>
+      <div class="f full"><span>Layout</span>
         <div class="lay" id="layout" role="group" aria-label="Layout"><button type="button" class="chip" data-lay="FF" aria-pressed="false">FF</button><button type="button" class="chip" data-lay="FR" aria-pressed="true">FR</button><button type="button" class="chip" data-lay="MR" aria-pressed="false">MR</button><button type="button" class="chip" data-lay="RR" aria-pressed="false">RR</button><button type="button" class="chip" data-lay="4WD" aria-pressed="false">4WD</button></div>
         <div class="lay" id="engPos" hidden style="margin-top:8px"><span class="hint" style="margin:0;align-self:center">Posizione motore (4WD)</span><button type="button" class="chip" data-eng="F" aria-pressed="true">Anteriore</button><button type="button" class="chip" data-eng="M" aria-pressed="false">Centrale</button><button type="button" class="chip" data-eng="R" aria-pressed="false">Posteriore</button></div>
         <select id="engine" hidden><option value="F">Anteriore</option><option value="M">Centrale</option><option value="R">Posteriore</option></select><select id="drive" hidden><option value="RWD">Posteriore</option><option value="FWD">Anteriore</option><option value="AWD">Integrale</option></select></div>
-      <label class="f">Peso<span class="u"><input type="number" id="weight" value="1100" min="400" max="7000" inputmode="numeric"><select id="uW" aria-label="Unità peso"><option value="kg">kg</option><option value="lb">lb</option></select></span></label>
-      <label class="f">Ripartizione peso (ant:post)<input type="text" id="wf" value="52:48" inputmode="decimal" placeholder="52:48" autocomplete="off"></label>
-      <label class="f">Potenza<span class="u"><input type="number" id="power" value="250" min="30" max="3000" inputmode="numeric"><select id="uP" aria-label="Unità potenza"><option value="cv">CV</option><option value="kw">kW</option><option value="hp">hp</option></select></span></label>
-      <label class="f">Coppia<span class="u"><input type="number" id="torque" value="300" min="30" max="4000" inputmode="decimal"><select id="uT" aria-label="Unità coppia"><option value="nm">Nm</option><option value="kgf">kgfm</option><option value="lbf">lb-ft</option></select></span></label>
+      <label class="f full">Peso<span class="u"><input type="number" id="weight" value="1100" min="400" max="7000" inputmode="numeric"><select id="uW" aria-label="Unità peso"><option value="kg">kg</option><option value="lb">lb</option></select></span></label>
+      <div class="f full"><span>Ripartizione peso</span><div class="wfrow"><div class="wfb"><small>ANT</small><span class="stp"><button type="button" data-wfs="-1" data-wfb="A" aria-label="ANT −1">−</button><input type="number" id="wfA" value="52" min="30" max="70" step="1" inputmode="decimal" aria-label="ANT"><button type="button" data-wfs="1" data-wfb="A" aria-label="ANT +1">+</button></span></div><b class="colon">:</b><div class="wfb"><small>POST</small><span class="stp"><button type="button" data-wfs="-1" data-wfb="P" aria-label="POST −1">−</button><input type="number" id="wfP" value="48" min="30" max="70" step="1" inputmode="decimal" aria-label="POST"><button type="button" data-wfs="1" data-wfb="P" aria-label="POST +1">+</button></span></div></div><input type="hidden" id="wf" value="52:48"></div>
+      <label class="f full">Potenza<span class="u"><input type="number" id="power" value="250" min="30" max="3000" inputmode="numeric"><select id="uP" aria-label="Unità potenza"><option value="cv">CV</option><option value="kw">kW</option><option value="hp">hp</option></select></span></label>
+      <label class="f full">Coppia<span class="u"><input type="number" id="torque" value="300" min="30" max="4000" inputmode="decimal"><select id="uT" aria-label="Unità coppia"><option value="nm">Nm</option><option value="kgf">kgfm</option><option value="lbf">lb-ft</option></select></span></label>
       <label class="f">Motore<select id="asp"><option value="NA">Aspirato</option><option value="turbo">Turbo / compressore</option><option value="ev">Elettrico</option></select></label>
       <label class="f">Baricentro<select id="cg"><option value="auto" selected>Auto (stimato)</option><option value="low">Basso</option><option value="mid">Medio</option><option value="high">Alto (SUV)</option></select></label>
-      <details class="f full" id="bannerBox"><summary>Dati letti dal gioco (opzionali, affinano il setup)</summary>
-        <p class="hint">Sono quelli del riquadro a sinistra nella pagina Setup. Se non li hai o non sei sicuro, lasciali su "Non so".</p>
+      <details class="f full" id="bannerBox"><summary>Dati aggiuntivi (opzionali, affinano il setup)</summary>
+        <p class="hint">Se li conosci inseriscili, altrimenti lascia i campi vuoti.</p>
         <div class="grid">
-          <label class="f">Stabilità a bassa velocità<select id="stabL"><option value="">Non so</option><option value="low">Bassa</option><option value="mid">Media</option><option value="high">Alta</option></select></label>
-          <label class="f">Stabilità ad alta velocità<select id="stabH"><option value="">Non so</option><option value="low">Bassa</option><option value="mid">Media</option><option value="high">Alta</option></select></label>
+          <label class="f">Stabilità bassa velocità<input type="number" id="stabL" step="0.01" min="-1" max="1" inputmode="decimal" placeholder="es. -0.1"><em class="sc" id="stabLc"></em></label>
+          <label class="f">Stabilità alta velocità<input type="number" id="stabH" step="0.01" min="-1" max="1" inputmode="decimal" placeholder="es. 0.3"><em class="sc" id="stabHc"></em></label>
           <label class="f">G di rotazione, bassa vel.<input type="number" id="rotL" step="any" inputmode="decimal" placeholder="es. 1.0"></label>
           <label class="f">G di rotazione, media vel.<input type="number" id="rotM" step="any" inputmode="decimal" placeholder="es. 1.2"></label>
           <label class="f">G di rotazione, alta vel.<input type="number" id="rotH" step="any" inputmode="decimal" placeholder="es. 1.4"></label>
         </div>
-        <p class="hint">"Bassa/Media/Alta" vale rispetto ad auto simili. Per i G di rotazione basta inserire tutti e tre i valori: conta l'andamento, non il numero assoluto.</p></details>
+        <p class="hint">Negativo = tendenza al sottosterzo, positivo = tendenza al sovrasterzo; entro ±0,2 è neutra e viene riconosciuta in automatico. Per i G di rotazione inserisci tutti e tre i valori: conta l'andamento, non il numero assoluto.</p></details>
       <label class="f">PP attuali<input type="number" id="ppNow" value="640" min="100" max="1500" inputmode="numeric"></label>
       <label class="f">PP target<input type="number" id="pp" value="600" min="100" max="1500" inputmode="numeric"></label>
       <label class="f">Gomme anteriori<select id="tyre"></select></label>
@@ -313,7 +335,7 @@ textarea{width:100%;margin-top:10px;background:var(--panel2);border:1px solid va
   <details class="rng" id="rngBox">
     <summary>Intervalli del tuo modello</summary>
     <p class="note">Valori di partenza generici. Ogni auto ha limiti propri: guarda min e max nel menu Officina e correggili qui. Il setup viene calcolato come posizione relativa nel range, quindi cambiare i limiti sposta tutto in modo coerente.</p>
-    <label class="chk"><input type="checkbox" id="toeInv" checked> Toe: positivo = toe-in (impostazione di default; togli la spunta se nel gioco è il contrario)</label>
+    <label class="chk"><input type="checkbox" id="toeInv" checked> Toe: positivo = toe-in (impostazione di default; togli la spunta se i tuoi valori usano il segno opposto)</label>
     <label class="chk" style="margin-top:8px"><input type="checkbox" id="bbInv"> Bilanciamento freni: positivo = più freno dietro (di default positivo = più freno davanti)</label>
     <div class="rtab h" style="margin-top:12px"><span>Parametro</span><span>Min</span><span>Max</span><span>Passo</span><span>Attuale</span></div>
     <div id="rtab"></div>
@@ -321,10 +343,10 @@ textarea{width:100%;margin-top:10px;background:var(--panel2);border:1px solid va
   </details>
 
   <div class="card" style="margin-top:12px">
-    <h2>Schede salvate</h2>
-    <div id="garage"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn ghost" id="gSaveBtn" type="button">Salva questa scheda</button><button class="btn ghost" id="gExp" type="button">Esporta</button><button class="btn ghost" id="gImp" type="button">Importa</button></div>
-    <textarea id="gjson" rows="4" hidden aria-label="JSON"></textarea>
+    <h2>Salvataggio</h2>
+    <p class="hint" style="margin:0">Salva tutti i valori (dati auto, parti, limiti, piano PP, setup e misura) in un file e riaprilo quando vuoi per continuare a modificarlo. L'ultimo stato viene ricordato anche in automatico su questo dispositivo.</p>
+    <div class="mrow"><button class="btn ghost" id="fileSave" type="button">Salva su file</button><button class="btn ghost" id="fileOpen" type="button">Apri file</button></div>
+    <input type="file" id="fileIn" accept=".json,application/json" hidden>
   </div>
 
   <div style="margin-top:16px"><button class="btn" id="gen" type="button">Genera setup</button></div>
@@ -349,12 +371,12 @@ textarea{width:100%;margin-top:10px;background:var(--panel2);border:1px solid va
     <p class="hint" id="effcar"></p>
   </div>
   <div class="card">
-    <h2>Verifica nel gioco</h2>
+    <h2>Verifica PP</h2>
     <p class="hint" style="margin:0 0 12px">Imposta questi valori nel gioco e leggi i PP che mostra. Inseriscili qui: l'app corregge la stima e propone un nuovo piano, finché i PP coincidono con il target.</p>
-    <label class="f">PP letti nel gioco<input type="number" id="ppObs" inputmode="numeric" placeholder="es. 612"></label>
+    <label class="f">PP letti<input type="number" id="ppObs" inputmode="numeric" placeholder="es. 612"></label>
     <div style="margin-top:12px"><button class="btn" id="recal" type="button">Ricalcola con i PP letti</button></div>
     <div id="hist" class="hist"></div>
-    <div style="margin-top:12px"><button class="btn ghost" id="ppReset" type="button">Azzera calibrazione</button></div>
+    <div class="row-c" style="margin-top:12px"><button class="btn ghost" id="ppReset" type="button">Azzera calibrazione</button></div>
   </div>
   <div style="margin-top:12px"><button class="btn" id="applyPlan" type="button">Genera setup con questo piano</button></div>
 </section>
@@ -362,9 +384,9 @@ textarea{width:100%;margin-top:10px;background:var(--panel2);border:1px solid va
 <section id="tab-setup" role="tabpanel" aria-labelledby="t-setup" hidden>
   <div class="warn" id="staleNote" hidden style="margin:0 0 12px">Il piano PP è cambiato dopo l'ultima generazione del setup. Rigenera per applicare peso e potenza effettivi.<div style="margin-top:8px"><button class="btn ghost" id="regenNow" type="button">Rigenera ora</button></div></div>
   <div class="card" id="measCard">
-    <h2>Setup in auto</h2>
-    <p class="hint" style="margin:0">Quando hai impostato la vettura nel gioco, tocca Misura: quel setup diventa il riferimento e sotto ogni valore vedi la differenza rispetto a quello che hai in auto.</p>
-    <div class="mrow"><button class="btn" id="measure" type="button">Misura</button><button class="btn ghost" id="undoMeas" type="button">Annulla modifiche</button><button class="btn ghost" id="restorePrev" type="button">Setup precedente</button></div>
+    <div class="ihead"><h2 style="margin:0">Setup in auto</h2><button type="button" class="help" data-h="meas" aria-label="Info">?</button></div>
+    <p class="hint" style="margin:0">Dopo aver impostato la vettura, tocca Misura: quel setup diventa il riferimento e sotto ogni valore vedi la differenza.</p>
+    <div class="mrow"><button class="btn" id="measure" type="button">Misura</button><button class="btn ghost" id="undoMeas" type="button">Annulla</button><button class="btn ghost" id="restorePrev" type="button">Setup precedente</button></div>
     <div class="mstat" id="measStat"></div>
   </div>
   <div class="card fxpanel fx" id="fxpanel">
@@ -374,21 +396,20 @@ textarea{width:100%;margin-top:10px;background:var(--panel2);border:1px solid va
   <div class="card" id="tipsCard"><h2>Prima prova</h2><ul class="tips" id="tips"></ul></div>
   <div class="card"><h2>Correzioni rapide</h2><p class="hint" style="margin:0 0 10px">Tocca il sintomo che senti in pista. Ogni tocco sposta più parametri insieme.</p><div class="fixes" id="fixes"></div></div>
   <div id="groups" style="margin-top:12px"></div>
-  <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+  <div class="row-c" style="margin-top:16px">
     <button class="btn" id="regen2" type="button">Rigenera setup</button>
     <button class="btn ghost" id="sumBtn" type="button">Riepilogo valori</button>
     <button class="btn ghost" id="toBase" type="button">Torna al setup base</button>
-    <button class="btn ghost" id="toAuto" type="button">Modifica dati auto</button>
   </div>
 </section>
 
 <section id="tab-guida" role="tabpanel" aria-labelledby="t-guida" hidden>
   <div class="card"><h2>Guida ai termini</h2><dl id="gloss"></dl></div>
   <div class="card"><h2>Come leggere i risultati</h2>
-    <p class="hint" style="margin:0">Le barre mostrano una stima, calcolata da regole di assetto generali. Non è una simulazione della fisica di GT7. Usa il setup base come punto di partenza, fai 3 giri puliti, poi cambia un gruppo di parametri alla volta.</p>
+    <p class="hint" style="margin:0">Le barre mostrano una stima, calcolata da regole di assetto generali. Non è una simulazione della fisica del gioco. Usa il setup base come punto di partenza, fai 3 giri puliti, poi cambia un gruppo di parametri alla volta.</p>
   </div>
 </section>
-<footer class="foot"><span id="verTxt"></span><br>Progetto non ufficiale, non affiliato a Sony Interactive Entertainment né a Polyphony Digital. Gran Turismo è un marchio dei rispettivi proprietari.</footer>
+<footer class="foot"><span id="verTxt"></span><br>Strumento indipendente e non ufficiale.</footer>
 </div>
 <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="mbox"><button type="button" class="mclose" id="mClose" aria-label="Chiudi">×</button><h3 id="mTitle"></h3><div id="mBody"></div><div style="margin-top:12px"><button type="button" class="btn ghost" id="mGuide">Apri la guida completa</button></div></div></div>
 <div class="toast" id="toast" hidden></div>
@@ -437,7 +458,7 @@ const P=[
  mk('rhF','Altezza ant.','mm',80,140,1,0,{need:'height'}),mk('rhR','Altezza post.','mm',80,140,1,0,{need:'height'}),
  mk('arbF','Barra antirollio ant.','',1,10,1,0,{need:'susp'}),mk('arbR','Barra antirollio post.','',1,10,1,0,{need:'susp'}),
  mk('compF','Compressione ant.','%',20,40,1,0,{need:'susp'}),mk('compR','Compressione post.','%',20,40,1,0,{need:'susp'}),
- mk('extF','Estensione ant.','%',20,50,1,0,{need:'susp'}),mk('extR','Estensione post.','%',20,50,1,0,{need:'susp'}),
+ mk('extF','Estensione ant.','%',30,60,1,0,{need:'susp'}),mk('extR','Estensione post.','%',30,60,1,0,{need:'susp'}),
  mk('freqF','Freq. naturale ant.','Hz',1,5,.01,2,{need:'susp'}),mk('freqR','Freq. naturale post.','Hz',1,5,.01,2,{need:'susp'}),
  mk('camF','Campanatura ant.','°',0,6,.1,1,{need:'susp'}),mk('camR','Campanatura post.','°',0,6,.1,1,{need:'susp'}),
  mk('toeF','Convergenza ant.','',-1,1,.01,2,{toe:1,need:'susp'}),mk('toeR','Convergenza post.','',-1,1,.01,2,{toe:1,need:'susp'}),
@@ -482,6 +503,9 @@ const layoutOf=c=>c.drive==='FWD'?'FF':c.drive==='AWD'?'4WD':({F:'FR',M:'MR',R:'
 const LSD0={FR:[10,35,20],MR:[10,35,25],RR:[12,40,15],FF:[8,25,12],'4WD':[10,35,20]};
 const BB0={FF:1,FR:0,MR:0,RR:-1,'4WD':0};
 /* stima del baricentro (-1 basso, 0 medio, +1 alto): dato non disponibile nel gioco, ricavato da peso, motore e layout (ipotesi) */
+/* stabilita' letta come numero tra -1 e +1: entro +-0.2 neutra, negativo = tendenza al sottosterzo (us), positivo = tendenza al sovrasterzo (os) */
+const STAB_N=.2;
+const stabClass=v=>{const x=parseFloat(String(v).replace(',','.'));if(!isFinite(x))return '';return x<-STAB_N?'us':x>STAB_N?'os':'mid'};
 const cgEst=(c,L)=>{let v=clamp((c.weight-1450)/700,-1,1);if(c.asp==='ev')v-=.35;if(c.engine==='M')v-=.25;return clamp(v,-1,1)};
 /* cifre decimali del passo (0.5 -> 1, 0.001 -> 3) */
 const decs=st=>{const t=String(st);return t.includes('e')?6:(t.split('.')[1]||'').length};
@@ -493,7 +517,7 @@ function gen(c,R,INV,lv){
  const cg=c.cg==='auto'||c.cg==null?cgEst(c,L):{low:-1,mid:0,high:1}[c.cg];
  let r=st.r+.35*(p.tech-p.fast)+({F:.1,M:-.1,R:-.15})[c.engine];
  /* dati del banner di GT7 (opzionali): stabilita' alta = si puo' chiedere piu' rotazione; poca rotazione a bassa velocita' = piu' rotazione */
- const sv=x=>({low:-1,mid:0,high:1})[x]||0,sL=sv(c.stabL),sH=sv(c.stabH);
+ const sv=x=>({us:1,mid:0,os:-1})[x]||0,sL=sv(c.stabL),sH=sv(c.stabH);
  r+=.06*(sL+sH);
  const hasRot=c.rotL>0&&c.rotM>0&&c.rotH>0,lowDef=hasRot?clamp((c.rotM-c.rotL)/c.rotM*3,-1,1):0,hiSlope=hasRot?clamp((c.rotH-c.rotM)/c.rotM*4,-1,1):0;
  r+=.08*lowDef;
@@ -504,9 +528,9 @@ function gen(c,R,INV,lv){
  o.freqR=f0(gR)*Math.sqrt(rf/.5)*(1+r*.05)*(FF?1.05:1);
  const a0=gi=>(2+gi*.5)*T.a+1.2*cg;
  o.arbF=a0(gF)-r*1.5; o.arbR=a0(gR)+r*2+(wf-.5)*6+(FF?1:0);
- const ext=f=>clamp((28+(f-1.5)*4)*T.d-4*p.bump,20,50);
+ const ext=f=>clamp((38+(f-1.5)*4)*T.d-4*p.bump,30,60);
  o.extF=ext(o.freqF); o.extR=ext(o.freqR);
- o.compF=clamp(o.extF*.85,20,40); o.compR=clamp(o.extR*.85,20,40);
+ o.compF=clamp((o.extF-10)*.85,20,40); o.compR=clamp((o.extR-10)*.85,20,40);
  const cadj=.2*p.fast-.2*p.str;
  o.camF=(.9+.18*gF+(FF?.3:0)+.3*r+cadj)*T.cam; o.camR=(.6+.14*gR-.3*r+cadj)*T.cam;
  o.toeF=.10*r*(1-.5*p.str); o.toeR=-.15+.12*r+(L==='RR'?-.05:0);
@@ -609,19 +633,21 @@ const APP_VERSION='0.0.0';
 let lang='it';
 try{const s=localStorage.getItem('gt7-lang');lang=s==='en'||s==='it'?s:((navigator.language||'it').toLowerCase().startsWith('it')?'it':'en')}catch(e){}
 const EN={
-'Ripartizione peso (ant:post)':'Weight distribution (front:rear)','Auto (stimato)':'Auto (estimated)',
-'Dati letti dal gioco (opzionali, affinano il setup)':'Data read from the game (optional, refines the setup)',
-'Sono quelli del riquadro a sinistra nella pagina Setup. Se non li hai o non sei sicuro, lasciali su "Non so".':'These are the ones in the left panel of the Setup page. If you do not have them or are unsure, leave them on "Not sure".',
-'Non so':'Not sure','Bassa':'Low','Media':'Medium','Alta':'High','Stabilità a bassa velocità':'Low-speed stability','Stabilità ad alta velocità':'High-speed stability',
+'Salvataggio':'Saving','Salva su file':'Save to file','Apri file':'Open file','Annulla':'Undo',
+'Salva tutti i valori (dati auto, parti, limiti, piano PP, setup e misura) in un file e riaprilo quando vuoi per continuare a modificarlo. L\'ultimo stato viene ricordato anche in automatico su questo dispositivo.':'Save all values (car data, parts, ranges, PP plan, setup and measurement) to a file and reopen it whenever you want to keep editing. The last state is also remembered automatically on this device.',
+'Ripartizione peso':'Weight distribution','ANT':'FRONT','POST':'REAR','Auto (stimato)':'Auto (estimated)',
+'Dati aggiuntivi (opzionali, affinano il setup)':'Additional data (optional, refines the setup)',
+'Se li conosci inseriscili, altrimenti lascia i campi vuoti.':'Enter them if you know them, otherwise leave the fields empty.',
+'Non so':'Not sure','Bassa':'Low','Media':'Medium','Alta':'High','Stabilità bassa velocità':'Low-speed stability','Stabilità alta velocità':'High-speed stability',
 'G di rotazione, bassa vel.':'Rotational G, low speed','G di rotazione, media vel.':'Rotational G, mid speed','G di rotazione, alta vel.':'Rotational G, high speed',
-'"Bassa/Media/Alta" vale rispetto ad auto simili. Per i G di rotazione basta inserire tutti e tre i valori: conta l\'andamento, non il numero assoluto.':'"Low/Medium/High" is relative to similar cars. For rotational G enter all three values: the trend matters, not the absolute number.',
+'Negativo = tendenza al sottosterzo, positivo = tendenza al sovrasterzo; entro ±0,2 è neutra e viene riconosciuta in automatico. Per i G di rotazione inserisci tutti e tre i valori: conta l\'andamento, non il numero assoluto.':'Negative = understeer tendency, positive = oversteer tendency; within ±0.2 it is neutral and is recognised automatically. For rotational G enter all three values: the trend matters, not the absolute number.',
 'In curva':'Cornering','Frenata e uscita':'Braking and exit','Alta velocità':'High speed','Fondo e sospensioni':'Ride and suspension',
 'Rolla troppo':'Too much body roll','Anteriore si blocca in frenata':'Front locks under braking','Posteriore si blocca in frenata':'Rear locks under braking','Poca trazione in uscita':'Poor traction on exit',
 'Sottosterzo ad alta velocità':'High-speed understeer','Sovrasterzo ad alta velocità':'High-speed oversteer','Instabile ad alta velocità':'Unstable at high speed','Troppo rigida sui cordoli':'Too stiff over kerbs','Tocca il fondo':'Bottoming out',
-'Layout (come nel gioco)':'Layout (as in the game)','Posizione motore (4WD)':'Engine position (4WD)','Anteriore':'Front','Centrale':'Mid','Posteriore':'Rear',
-'Peso':'Weight','Potenza':'Power','Coppia':'Torque','Setup in auto':'Setup in the car','Misura':'Measure','Annulla modifiche':'Undo changes','Setup precedente':'Previous setup','Rigenera setup':'Regenerate setup','Riepilogo valori':'Values summary',
-'Quando hai impostato la vettura nel gioco, tocca Misura: quel setup diventa il riferimento e sotto ogni valore vedi la differenza rispetto a quello che hai in auto.':'Once you have set the car up in the game, tap Measure: that setup becomes the reference and under each value you see the difference from what you have in the car.',
-'Come si usa.':'How to use.','1) Compila Auto e tocca Genera setup. 2) Nel gioco imposta i valori mostrati e tocca Misura. 3) Prova, correggi con le Correzioni rapide o gli slider e confronta con la Misura.':'1) Fill in Car and tap Generate setup. 2) Enter the shown values in the game and tap Measure. 3) Test, fix with Quick fixes or the sliders and compare with the measurement.',
+'Posizione motore (4WD)':'Engine position (4WD)','Anteriore':'Front','Centrale':'Mid','Posteriore':'Rear',
+'Peso':'Weight','Potenza':'Power','Coppia':'Torque','Setup in auto':'Setup in the car','Misura':'Measure','Annulla':'Undo','Setup precedente':'Previous setup','Rigenera setup':'Regenerate setup','Riepilogo valori':'Values summary',
+'Dopo aver impostato la vettura, tocca Misura: quel setup diventa il riferimento e sotto ogni valore vedi la differenza.':'After setting the car up, tap Measure: that setup becomes the reference and under each value you see the difference.',
+'Come si usa.':'How to use.','1) Compila Auto e tocca Genera setup. 2) Imposta in auto i valori mostrati e tocca Misura. 3) Prova, correggi con le Correzioni rapide o gli slider e confronta con la Misura.':'1) Fill in Car and tap Generate setup. 2) Enter the shown values in the car and tap Measure. 3) Test, fix with Quick fixes or the sliders and compare with the measurement.',
 /* interfaccia statica */
 'Gomme anteriori':'Front tyres','Gomme posteriori':'Rear tyres','Parti installate':'Installed parts',
 'Il tuner regola solo ciò che la tua auto può regolare. Togli la spunta alle parti che non hai montato.':'The tuner only adjusts what your car can adjust. Untick the parts you have not fitted.',
@@ -629,20 +655,20 @@ const EN={
 'Differenziale completamente regolabile':'Fully customizable differential','Differenziale centrale a vettorizzazione (solo integrale)':'Torque-vectoring center differential (AWD only)',
 'Aerodinamica regolabile':'Adjustable aerodynamics','Controller del bilanciamento freni':'Brake balance controller','Cambio completamente regolabile':'Fully customizable transmission','Sterzo integrale 4WS':'4WS four-wheel steering',
 'ECU completamente regolabile':'Fully customizable ECU','Limitatore di potenza':'Power restrictor','Zavorra':'Ballast',
-'Cambio e sterzo':'Transmission and steering','Progetto non ufficiale, non affiliato a Sony Interactive Entertainment né a Polyphony Digital. Gran Turismo è un marchio dei rispettivi proprietari.':'Unofficial project, not affiliated with Sony Interactive Entertainment or Polyphony Digital. Gran Turismo is a trademark of its respective owners.','Numero di marce':'Number of gears','Rapporto finale':'Final drive','Velocità massima e rapporti':'Top speed and gear ratios','Livelli desiderati':'Desired levels','Parametri di cui il tuner non può stimare l\'effetto. Lascia Auto per il livello consigliato o scegli tu quanto spingere.':'Parameters whose effect the tuner cannot estimate. Leave Auto for the suggested level or choose how hard to push.',
+'Cambio e sterzo':'Transmission and steering','Strumento indipendente e non ufficiale.':'Independent, unofficial tool.','Numero di marce':'Number of gears','Rapporto finale':'Final drive','Velocità massima e rapporti':'Top speed and gear ratios','Livelli desiderati':'Desired levels','Parametri di cui il tuner non può stimare l\'effetto. Lascia Auto per il livello consigliato o scegli tu quanto spingere.':'Parameters whose effect the tuner cannot estimate. Leave Auto for the suggested level or choose how hard to push.',
 'Attuale':'Current','Schede salvate':'Saved sheets','Salva questa scheda':'Save this sheet','Esporta':'Export','Importa':'Import','Apri la guida completa':'Open the full guide',
 'Velocità massima (cambio)':'Top speed (gearing)','Sterzo posteriore (4WS)':'Rear steering (4WS)',
 'Velocità massima':'Top speed','Sterzo posteriore':'Rear steering',
 'PP':'PP','PP attuali':'Current PP','PP target':'Target PP',
 'ECU installata (regolazione potenza)':'ECU installed (power adjustment)','Limitatore di potenza installato':'Power restrictor installed','Zavorra installata (peso e posizione)':'Ballast installed (weight and position)',
 'PP attuali: quelli che il gioco mostra con ECU e limitatore al 100% e zavorra a 0 kg. PP target: quelli che vuoi ottenere. La scheda PP calcola come arrivarci.':'Current PP: the value the game shows with ECU and restrictor at 100% and ballast at 0 kg. Target PP: the value you want. The PP tab works out how to get there.',
-'Toe: positivo = toe-in (impostazione di default; togli la spunta se nel gioco è il contrario)':'Toe: positive = toe-in (default; untick if it is the opposite in the game)',
+'Toe: positivo = toe-in (impostazione di default; togli la spunta se i tuoi valori usano il segno opposto)':'Toe: positive = toe-in (default; untick if your values use the opposite sign)',
 'Bilanciamento freni: positivo = più freno dietro (di default positivo = più freno davanti)':'Brake balance: positive = more rear brake (default: positive = more front brake)',
 'Obiettivo PP':'PP target','Attuali':'Current','Target':'Target','Previsti':'Predicted',
 'Strategia':'Strategy','Ripartizione della riduzione':'How to split the reduction','Metodo per ridurre la potenza':'Method to reduce power','Posizione della zavorra':'Ballast position',
-'Calcola piano':'Calculate plan','Piano':'Plan','Verifica nel gioco':'Check in the game',
+'Calcola piano':'Calculate plan','Piano':'Plan','Verifica PP':'Check PP',
 'Imposta questi valori nel gioco e leggi i PP che mostra. Inseriscili qui: l\'app corregge la stima e propone un nuovo piano, finché i PP coincidono con il target.':'Enter these values in the game and read the PP it shows. Type them here: the app corrects its estimate and proposes a new plan until the PP match the target.',
-'PP letti nel gioco':'PP read in the game','Ricalcola con i PP letti':'Recalculate with the PP read','Azzera calibrazione':'Reset calibration','Genera setup con questo piano':'Generate setup with this plan',
+'PP letti':'PP read','Ricalcola con i PP letti':'Recalculate with the PP read','Azzera calibrazione':'Reset calibration','Genera setup con questo piano':'Generate setup with this plan',
 'Il piano PP è cambiato dopo l\'ultima generazione del setup. Rigenera per applicare peso e potenza effettivi.':'The PP plan changed after the setup was last generated. Regenerate to apply the effective weight and power.','Rigenera ora':'Regenerate now',
 'Soprattutto potenza':'Mostly power','Bilanciata':'Balanced','Soprattutto zavorra':'Mostly ballast','ECU':'ECU','Limitatore':'Restrictor','Automatica':'Automatic','Manuale':'Manual',
 'ECU: potenza':'ECU: power output','Limitatore di potenza':'Power restrictor','Zavorra: peso':'Ballast: weight','Zavorra: posizione':'Ballast: position',
@@ -661,7 +687,7 @@ const EN={
 'Effetto sulla vettura':'Effect on the car','riduci':'collapse','espandi':'expand','Prima prova':'First run','Correzioni rapide':'Quick fixes',
 'Tocca il sintomo che senti in pista. Ogni tocco sposta più parametri insieme.':'Tap the symptom you feel on track. Each tap moves several parameters together.',
 'Torna al setup base':'Back to base setup','Modifica dati auto':'Edit car data','Guida ai termini':'Glossary','Come leggere i risultati':'How to read the results',
-'Le barre mostrano una stima, calcolata da regole di assetto generali. Non è una simulazione della fisica di GT7. Usa il setup base come punto di partenza, fai 3 giri puliti, poi cambia un gruppo di parametri alla volta.':'The bars show an estimate based on general setup rules. It is not a simulation of GT7\'s physics. Use the base setup as a starting point, do 3 clean laps, then change one group of parameters at a time.',
+'Le barre mostrano una stima, calcolata da regole di assetto generali. Non è una simulazione della fisica del gioco. Usa il setup base come punto di partenza, fai 3 giri puliti, poi cambia un gruppo di parametri alla volta.':'The bars show an estimate based on general setup rules. It is not a simulation of the game\'s physics. Use the base setup as a starting point, do 3 clean laps, then change one group of parameters at a time.',
 /* dati */
 
 'Comfort Duro':'Comfort Hard','Comfort Medio':'Comfort Medium','Comfort Morbido':'Comfort Soft','Sportive Dure':'Sports Hard','Sportive Medie':'Sports Medium','Sportive Morbide':'Sports Soft',
@@ -814,11 +840,11 @@ const INFO=[
  u:['Il livello è una posizione tra il minimo e il massimo del tuo range.','The level is a position between the minimum and maximum of your range.'],
  d:['',''],x:['Dopo aver cambiato un livello tocca Genera setup.','After changing a level tap Generate setup.']},
 {id:'ppcycle',t:['Ciclo dei PP','PP loop'],
- w:['Il piano stima l\'effetto di potenza e peso sui PP. Inserisci i PP letti nel gioco: l\'app corregge la stima e ricalcola, finché sei entro 1 PP dal target.','The plan estimates how power and weight affect PP. Enter the PP read in the game: the app corrects its estimate and recalculates until you are within 1 PP of the target.'],
+ w:['Il piano stima l\'effetto di potenza e peso sui PP. Inserisci i PP letti: l\'app corregge la stima e ricalcola, finché sei entro 1 PP dal target.','The plan estimates how power and weight affect PP. Enter the PP read: the app corrects its estimate and recalculates until you are within 1 PP of the target.'],
  u:['',''],d:['',''],
  x:['Aerodinamica e posizione della zavorra possono cambiare i PP in modi che il modello non conosce: il ciclo li assorbe.','Aero and ballast position can change PP in ways the model does not know: the loop absorbs them.']},
 {id:'pp',t:['Punti prestazione (PP)','Performance points (PP)'],
- w:['Indice di GT7 che riassume le prestazioni di un\'auto. Qui serve a stimare la rigidità generale e a pianificare potenza e peso.','GT7\'s index summarizing a car\'s performance. Here it is used to estimate overall stiffness and to plan power and weight.'],
+ w:['Indice del gioco che riassume le prestazioni di un\'auto. Qui serve a stimare la rigidità generale e a pianificare potenza e peso.','The game\'s index summarizing a car\'s performance. Here it is used to estimate overall stiffness and to plan power and weight.'],
  u:['',''],d:['',''],x:['',''] },
 {id:'sotto',t:['Sottosterzo','Understeer'],
  w:['L\'anteriore perde grip e l\'auto tende ad andare larga nella curva.','The front loses grip and the car tends to run wide in the corner.'],u:['',''],d:['',''],x:['',''] },
@@ -828,9 +854,13 @@ const INFO=[
  w:['Ogni auto ha limiti propri per molle, altezze e smorzamenti. L\'app calcola una posizione relativa e la converte nel tuo min e max. Se inserisci anche il valore attuale, vedi la differenza rispetto a quello.','Every car has its own limits for springs, heights and dampers. The app calculates a relative position and converts it into your min and max. If you also enter the current value, you see the difference from it.'],
  u:['',''],d:['',''],x:['',''] },
 {id:'inst',t:['Parti installate','Installed parts'],
- w:['In GT7 più parti compri dal Tuning Shop, più impostazioni diventano disponibili. Il tuner mostra solo ciò che la tua auto può regolare.','In GT7 the more parts you buy from the Tuning Shop, the more settings become available. The tuner only shows what your car can adjust.'],
+ w:['Nel gioco più parti compri dal Tuning Shop, più impostazioni diventano disponibili. Il tuner mostra solo ciò che la tua auto può regolare.','In the game the more parts you buy from the Tuning Shop, the more settings become available. The tuner only shows what your car can adjust.'],
  u:['',''],d:['',''],x:['',''] }
 ];
+INFO.push({id:'meas',t:['Misura, Annulla e Setup precedente','Measure, Undo and Previous setup'],
+ w:['Misura segna il setup che vedi adesso come quello che hai realmente in auto: da quel momento sotto ogni valore compare la differenza rispetto a esso e sulle barre degli effetti un segno indica dove si trova la tua auto.','Measure marks the setup you see now as the one you really have in the car: from then on each value shows its difference from it and a mark on the effect bars shows where your car stands.'],
+ u:['',''],d:['',''],
+ x:['Annulla riporta i valori all\'ultimo setup misurato (o al base, se non hai misurato). Setup precedente ripristina quello che avevi prima dell\'ultima rigenerazione; premilo di nuovo per tornare indietro.','Undo returns the values to the last measured setup (or the base one if you have not measured). Previous setup restores what you had before the last regeneration; press it again to go back.']});
 const INFOK=Object.fromEntries(INFO.map(i=>[i.id,i]));
 
 /* ===== UI ===== */
@@ -860,7 +890,7 @@ const FIXES=[
  ['Troppo rigida sui cordoli',{compF:-.08,compR:-.08,extF:-.06,extR:-.06,freqF:-.03,freqR:-.03},'Fondo e sospensioni'],
  ['Tocca il fondo',{rhF:.1,rhR:.1,freqF:.03,freqR:.03},'Fondo e sospensioni']];
 const FORM=['stabL','stabH','rotL','rotM','rotH','carName','engine','drive','uW','uP','uT','weight','wf','power','torque','asp','cg','pp','ppNow','tyre','tyreR','susp','nGears'];
-const KEY='gt7-setup-lab-v2';
+const KEY='setup-lab-v3';
 let st={terrain:'asfalto',style:'neutro',circuit:'spa',prof:{...CIRCUITS.spa.p}};
 let R=defRanges(),INV={toe:true,bb:false},S={},B={},meta={r:0,L:'FR',g:4},car=null,carE=null;
 let plan=plDefault(),lam=1,hist=[],opt={share:.6,shareKey:'bil',method:'ecu',pos:'auto'},stale=false,ppState='',lv={dfF:null,dfR:null,ts:null,rsa:null},lvAuto={},cur={};
@@ -868,12 +898,12 @@ let A=null,prevSet=null,calibOs=0,measAt='';
 const CHK=['aero','cEcu','cRst','cBal','cLsd','cTv','cBrk','cTrans','c4ws'];
 
 /* ripartizione peso: accetta '52:48', '52/48' o solo '52' */
-const parseWf=v=>{const m=String(v).replace(',','.').match(/(\d+(?:\.\d+)?)\s*[:\/\-]\s*(\d+(?:\.\d+)?)/);let a=m?(+m[1])/((+m[1])+(+m[2]))*100:parseFloat(String(v).replace(',','.'));return isFinite(a)?clamp(a,30,70):52};
+const parseWf=v=>{const m=String(v).replace(',','.').match(/(\d+(?:\.\d+)?)\s*[:\/\-]\s*(\d+(?:\.\d+)?)/);let a=m?(+m[1])/((+m[1])+(+m[2]))*100:parseFloat(String(v).replace(',','.'));return isFinite(a)?+clamp(a,30,70).toFixed(2):52};
 const num=(id,d,a,b,u)=>{const v=parseFloat($('#'+id).value)*(u||1);return isFinite(v)?clamp(v,a,b):d};
 const unitF=id=>(typeof UF==='undefined'?1:UF[$('#'+id).value]||1);
 function readCar(){
  return {name:$('#carName').value.trim()||tr('Senza nome','Unnamed'),engine:$('#engine').value,drive:$('#drive').value,
-  weight:num('weight',1100,300,4000,unitF('uW')),wf:parseWf($('#wf').value),stabL:$('#stabL').value,stabH:$('#stabH').value,rotL:+$('#rotL').value||0,rotM:+$('#rotM').value||0,rotH:+$('#rotH').value||0,power:num('power',250,20,3000,unitF('uP')),torque:num('torque',300,20,4000,unitF('uT')),
+  weight:num('weight',1100,300,4000,unitF('uW')),wf:parseWf($('#wf').value),stabL:stabClass($('#stabL').value),stabH:stabClass($('#stabH').value),rotL:+$('#rotL').value||0,rotM:+$('#rotM').value||0,rotH:+$('#rotH').value||0,power:num('power',250,20,3000,unitF('uP')),torque:num('torque',300,20,4000,unitF('uT')),
   asp:$('#asp').value,cg:$('#cg').value,pp:num('pp',600,100,1500),ppNow:num('ppNow',650,100,1500),gears:Math.round(num('nGears',6,4,10)),tyre:$('#tyre').value,tyreR:$('#tyreR').value||$('#tyre').value,aero:$('#aero').checked,
   inst:{susp:$('#susp').value,lsd:$('#cLsd').checked,tv:$('#cTv').checked,aero:$('#aero').checked,brk:$('#cBrk').checked,trans:$('#cTrans').checked,ws:$('#c4ws').checked},
   comp:{ecu:$('#cEcu').checked,rst:$('#cRst').checked,bal:$('#cBal').checked},
@@ -889,7 +919,7 @@ function apply(d){
  Object.entries(d.f).forEach(([i,v])=>{if(CHK.includes(i))$('#'+i).checked=v;else if($('#'+i))$('#'+i).value=v});
  st=d.st;R={...defRanges(),...d.R};INV={...INV,...(d.INV||{})};plan={...plDefault(),...(d.plan||{})};lam=d.lam||1;hist=d.hist||[];opt={...opt,...(d.opt||{})};
  lv={dfF:null,dfR:null,ts:null,rsa:null,...(d.lv||{})};lvAuto=d.lvAuto||{};cur=d.cur||{};S=d.S||{};B=d.B||{};meta=d.meta||meta;A=d.A||null;prevSet=d.prevSet||null;measAt=d.measAt||'';
- ['uW','uP','uT'].forEach(i=>{const e=$('#'+i);if(e)e.dataset.prev=e.value});if(typeof syncLayout==='function')syncLayout();
+ ['uW','uP','uT'].forEach(i=>{const e=$('#'+i);if(e)e.dataset.prev=e.value});if(typeof syncLayout==='function'){syncLayout();syncWf();stabLab()}
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(snap()))}catch(e){}}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(!d)return false;apply(d);return Object.keys(S).length>0}catch(e){return false}}
@@ -959,7 +989,7 @@ function paintVal(k){
  const rg=document.querySelector(`[data-r="${k}"]`);if(rg)rg.value=S[k];
  if(q.pos){const u=R[k],pc=document.querySelector(`[data-pc="${k}"]`);if(pc)pc.textContent=Math.round((S[k]-u.min)/((u.max-u.min)||1)*100)+'% '+tr('del range','of range')}
  const ref=refOf(k),dd=decs(R[k].step),d=+(S[k]-ref.v).toFixed(dd+1),de=document.querySelector(`[data-d="${k}"]`);
- if(de)de.textContent=d?`${d>0?'+':''}${d.toFixed(dd)} ${ref.l}`:'';
+ if(de)de.textContent=d?`${d>0?'+':'−'}${Math.abs(d).toFixed(dd)}`:'';
 }
 function setVal(k,v){
  const u=R[k],q=PK[k];v=clamp(Math.round(v/u.step)*u.step,u.min,u.max);
@@ -1023,7 +1053,7 @@ function refOf(k){
 function regenerate(show){
  if(Object.keys(S).length)prevSet={S:{...S},B:{...B},plan:{...plan},lv:{...lv}};
  car=readCar();carE=effCar(car,plan);const g=gen(carE,R,INV,lv);lvAuto=g.auto;S=g.S;B={...g.S};meta={r:g.r,L:g.L,g:g.g};stale=false;
- $('#hdrCar').textContent=`${car.name} · ${meta.L}`;
+ $('#hdrCar').textContent=car.name;
  buildRanges();buildGroups();buildLevels();paintFx();paintTips();renderPP();save();
  if(show){tab('setup');toast(tr('Setup rigenerato con le nuove impostazioni. Il precedente è salvato: puoi ripristinarlo.','Setup regenerated with the new settings. The previous one is saved: you can restore it.'),4200)}
 }
@@ -1072,7 +1102,6 @@ document.addEventListener('change',e=>{
 $('#gen').onclick=()=>regenerate(true);
 $('#rngReset').onclick=()=>{R=defRanges();buildRanges();toast(tr('Intervalli di partenza ripristinati','Default ranges restored'))};
 $('#toBase').onclick=()=>{S={...B};buildGroups();paintFx();save();toast(tr('Setup base ripristinato','Base setup restored'))};
-$('#toAuto').onclick=()=>tab('auto');
 $('#fxToggle').onclick=()=>{const m=$('#fxpanel').classList.toggle('min');$('#fxToggle').textContent=T(m?'espandi':'riduci')};
 
 /* ===== POPUP INFO, LIVELLI, SCHEDE SALVATE ===== */
@@ -1126,41 +1155,6 @@ document.addEventListener('input',e=>{
  document.querySelector(`[data-lc="${k}"]`).innerHTML=lvChips(k);save();
 });
 
-/* schede salvate */
-const GKEY='gt7-garage-v1';
-let gMem=null;
-const gLoad=()=>{try{const a=JSON.parse(localStorage.getItem(GKEY)||'[]');return Array.isArray(a)?a:(gMem||[])}catch(e){return gMem||[]}};
-const gStore=a=>{gMem=a;try{localStorage.setItem(GKEY,JSON.stringify(a))}catch(e){toast(tr('Archivio del browser non disponibile: le schede restano solo in questa sessione. Usa Esporta per conservarle.','Browser storage unavailable: sheets stay only for this session. Use Export to keep them.'))}return true};
-function buildGarage(){
- const a=gLoad();
- $('#garage').innerHTML=a.length?a.map(g=>`<div class="grow"><span class="gn">${esc(g.name)}</span><span class="gm">${g.d&&g.d.f?esc(g.d.f.pp)+' PP':''}</span><button type="button" class="btn ghost" data-gl="${g.id}">${tr('Carica','Load')}</button><button type="button" class="btn ghost" data-gd="${g.id}" aria-label="${tr('Elimina','Delete')} ${esc(g.name)}">×</button></div>`).join('')
-  :`<p class="hint" style="margin:0">${tr('Nessuna scheda salvata. Una scheda conserva dati auto, parti, piano PP, livelli e setup.','No saved sheets. A sheet keeps car data, parts, PP plan, levels and setup.')}</p>`;
-}
-function refreshAll(){
- refreshCar();$('#hdrCar').textContent=`${car.name} · ${meta.L}`;
- buildChoices();buildRanges();buildGroups();buildLevels();paintFx();paintTips();ppChoices();renderPP();warnTyre();
-}
-document.addEventListener('click',e=>{
- const b=e.target.closest('button');if(!b)return;
- if(b.id==='gSaveBtn'){
-  const a=gLoad(),d=snap(),name=($('#carName').value.trim()||tr('Senza nome','Unnamed'));
-  const i=a.findIndex(x=>x.name===name);const rec={id:i>=0?a[i].id:String(Date.now()),name,d};
-  if(i>=0)a[i]=rec;else a.push(rec);
-  if(gStore(a)){buildGarage();toast(tr('Scheda salvata','Sheet saved'))}return;
- }
- if(b.dataset.gl){const g=gLoad().find(x=>x.id===b.dataset.gl);if(g){try{apply(g.d);refreshAll();save();toast(tr('Scheda caricata','Sheet loaded'))}catch(x){toast(tr('Scheda non valida.','Invalid sheet.'))}}return}
- if(b.dataset.gd){if(gStore(gLoad().filter(x=>x.id!==b.dataset.gd)))buildGarage();return}
- if(b.id==='gExp'){const t=$('#gjson');t.hidden=false;t.value=JSON.stringify(gLoad());t.select();
-  try{navigator.clipboard.writeText(t.value).then(()=>toast(tr('Copiato negli appunti','Copied to clipboard')),()=>{})}catch(x){}return}
- if(b.id==='gImp'){
-  const t=$('#gjson');
-  if(t.hidden||!t.value.trim()){t.hidden=false;t.value='';t.focus();return toast(tr('Incolla il testo esportato e tocca di nuovo Importa','Paste the exported text and tap Import again'))}
-  try{const inc=JSON.parse(t.value);if(!Array.isArray(inc))throw 0;
-   const a=gLoad();inc.forEach(r=>{if(r&&r.name&&r.d){const i=a.findIndex(x=>x.name===r.name);const rec={id:String(r.id||Date.now()).replace(/[^\w-]/g,''),name:String(r.name).slice(0,80),d:r.d};if(i>=0)a[i]=rec;else a.push(rec)}});
-   if(gStore(a)){buildGarage();t.value='';t.hidden=true;toast(tr('Schede importate','Sheets imported'))}
-  }catch(x){toast(tr('Testo non valido: incolla quello copiato con Esporta.','Invalid text: paste what Export copied.'))}
- }
-});
 
 /* ===== LAYOUT, UNITA', MISURA / ANNULLA, RIEPILOGO ===== */
 const LAYS={FF:['F','FWD'],FR:['F','RWD'],MR:['M','RWD'],RR:['R','RWD'],'4WD':[null,'AWD']};
@@ -1184,7 +1178,7 @@ function measStat(){
  const el=$('#measStat');if(!el)return;
  el.textContent=A?tr(`Riferimento: setup misurato alle ${measAt}. Le differenze sono rispetto a quello.`,`Reference: setup measured at ${measAt}. Differences are relative to it.`)
   :tr('Nessuna misura: le differenze sono rispetto al setup base. Dopo aver impostato il setup in auto tocca Misura.','No measurement: differences are relative to the base setup. After setting the setup in the car, tap Measure.');
- $('#restorePrev').disabled=!prevSet;$('#undoMeas').textContent=A?tr('Annulla modifiche (torna al misurato)','Undo changes (back to measured)'):tr('Annulla modifiche (torna al base)','Undo changes (back to base)');
+ $('#restorePrev').disabled=!prevSet;
 }
 function repaintAll(){buildGroups();paintFx();measStat();save()}
 $('#measure').onclick=()=>{A={...S};const d=new Date();measAt=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');repaintAll();toast(tr('Misurato: questo setup è ora il riferimento (quello che hai in auto).','Measured: this setup is now the reference (what you have in the car).'),3200)};
@@ -1220,7 +1214,44 @@ document.addEventListener('change',e=>{
  const id=e.target.id;
  if(CHK.includes(id)||id==='susp'||id==='nGears'){refreshCar();buildRanges();buildLevels();if(typeof ppChoices==='function')renderPP()}
 });
-document.addEventListener('change',e=>{if(e.target.id==='wf'){const a=parseWf(e.target.value);e.target.value=+a.toFixed(1)+':'+ +(100-a).toFixed(1)}});
+
+function syncWf(){const a=parseWf($('#wf').value);$('#wfA').value=+a.toFixed(1);$('#wfP').value=+(100-a).toFixed(1)}
+function setWf(a,from){a=clamp(isFinite(a)?a:52,30,70);a=+a.toFixed(1);$('#wf').value=a+':'+ +(100-a).toFixed(1);if(from!=='A')$('#wfA').value=a;if(from!=='P')$('#wfP').value=+(100-a).toFixed(1)}
+document.addEventListener('input',e=>{const t=e.target;
+ if(t.id==='wfA'){const v=parseFloat(t.value);if(isFinite(v)&&v>=30&&v<=70){setWf(v,'A');$('#wfP').value=+(100-v).toFixed(1);save()}}
+ if(t.id==='wfP'){const v=parseFloat(t.value);if(isFinite(v)&&v>=30&&v<=70){setWf(100-v,'P');$('#wfA').value=+(100-v).toFixed(1);save()}}
+ if(t.id==='stabL'||t.id==='stabH')stabLab();
+});
+document.addEventListener('change',e=>{const t=e.target;if(t.id==='wfA'||t.id==='wfP'){const v=parseFloat(t.value);setWf(t.id==='wfA'?v:100-v);save()}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-wfs]');if(!b)return;
+ const a=parseWf($('#wf').value),s=+b.dataset.wfs;setWf(b.dataset.wfb==='A'?a+s:a-s);save()});
+function stabLab(){[['stabL','stabLc'],['stabH','stabHc']].forEach(([i,l])=>{const c=stabClass($('#'+i).value);$('#'+l).textContent=c?'→ '+tr({us:'Sottosterzo',mid:'Neutra',os:'Sovrasterzo'}[c],{us:'Understeer',mid:'Neutral',os:'Oversteer'}[c]):''})}
+function refreshAll(){
+ refreshCar();$('#hdrCar').textContent=car.name;
+ buildChoices();buildRanges();buildGroups();buildLevels();paintFx();paintTips();ppChoices();renderPP();warnTyre();syncWf();stabLab();measStat();
+}
+function fileName(){return (($('#carName').value.trim()||'setup').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'')||'setup')+'.setuplab.json'}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.id==='fileSave'){
+  const o={app:'setup-lab',format:1,version:APP_VERSION,saved:new Date().toISOString(),data:snap()};
+  const url=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'})),a=document.createElement('a');
+  a.href=url;a.download=fileName();document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+  toast(tr('File salvato: '+fileName(),'File saved: '+fileName()),3600);
+ }
+ if(b.id==='fileOpen')$('#fileIn').click();
+});
+$('#fileIn').addEventListener('change',e=>{
+ const f=e.target.files&&e.target.files[0];if(!f)return;
+ const rd=new FileReader();
+ rd.onload=()=>{try{
+  const o=JSON.parse(rd.result);if(!o||o.app!=='setup-lab'||!o.data||!o.data.f)throw 0;
+  apply(o.data);refreshAll();if(!Object.keys(S).length)regenerate(false);save();
+  toast(tr('File caricato: '+f.name,'File loaded: '+f.name),3200);
+ }catch(x){toast(tr('File non valido: apri un file salvato da questa app.','Invalid file: open a file saved by this app.'),3600)}};
+ rd.onerror=()=>toast(tr('Lettura del file non riuscita.','Could not read the file.'));
+ rd.readAsText(f);e.target.value='';
+});
 
 /* ===== SCHEDA PP ===== */
 const SHARES={pot:{n:'Soprattutto potenza',v:.85},bil:{n:'Bilanciata',v:.6},zav:{n:'Soprattutto zavorra',v:.25}};
@@ -1282,7 +1313,7 @@ function solve(){
 }
 function recal(){
  refreshCar();const obs=parseFloat($('#ppObs').value);
- if(!isFinite(obs)||obs<50||obs>2000)return toast(tr('Inserisci i PP letti nel gioco.','Enter the PP read in the game.'));
+ if(!isFinite(obs)||obs<50||obs>2000)return toast(tr('Inserisci i PP letti.','Enter the PP read.'));
  hist.push({plan:{...plan},pred:Math.round(ppPred(car,plan,lam)),obs:Math.round(obs)});
  const nl=calibrate(car,plan,obs,lam);
  if(Math.abs(obs-car.pp)<=1){lam=nl;ppState='done'}
@@ -1316,9 +1347,9 @@ document.addEventListener('input',e=>{
 /* ---- avvio ---- */
 buildStatic();
 const had=load();
-buildChoices();buildFx();paintFixes();ppChoices();buildGarage();
+buildChoices();buildFx();paintFixes();ppChoices();
 if(had){
- refreshCar();$('#hdrCar').textContent=`${car.name} · ${meta.L}`;
+ refreshCar();$('#hdrCar').textContent=car.name;
  buildRanges();buildGroups();buildLevels();paintFx();paintTips();renderPP();
 }else{
  refreshCar();const r0=solvePlan(car,plan,lam,optNow(),R);plan=r0.plan;regenerate(false);
@@ -1331,7 +1362,7 @@ function applyLang(){
  const nm=$('#carName');
  if(nm.value==='Esempio FR leggera'||nm.value==='Example light FR car')nm.value=tr('Esempio FR leggera','Example light FR car');
  buildStatic();buildChoices();buildFx();paintFixes();
- syncLayout();measStat();buildRanges();buildGroups();paintFx();paintTips();warnTyre();ppChoices();renderPP();buildLevels();buildGarage();$('#mClose').setAttribute('aria-label',tr('Chiudi','Close'));
+ syncLayout();measStat();buildRanges();buildGroups();paintFx();paintTips();warnTyre();ppChoices();renderPP();buildLevels();$('#mClose').setAttribute('aria-label',tr('Chiudi','Close'));
  $('#fxToggle').textContent=T($('#fxpanel').classList.contains('min')?'espandi':'riduci');
  document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lang===lang));
 }
@@ -1341,7 +1372,7 @@ document.addEventListener('click',e=>{
  applyLang();save();
 });
 applyLang();
-$('#verTxt').textContent='GT7 Setup Lab v'+APP_VERSION;
+$('#verTxt').textContent='Setup Lab v'+APP_VERSION;
 
 </script>
 

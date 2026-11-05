@@ -1,8 +1,8 @@
 {
  "id": "./",
- "name": "GT7 Setup Lab",
- "short_name": "GT7 Setup",
- "description": "Starting tuning setups for Gran Turismo 7",
+ "name": "Setup Lab",
+ "short_name": "Setup Lab",
+ "description": "Tuning tool designed for Gran Turismo 7",
  "lang": "en",
  "start_url": "./index.html",
  "scope": "./",

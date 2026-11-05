@@ -1,6 +1,6 @@
-# GT7 Setup Lab
+# Setup Lab
 
-GT7 Setup Lab: a free, installable web app that generates a starting tuning setup for Gran Turismo 7. Enter car data, installed parts, tyres, surface, circuit and driving style, plan ECU, restrictor and ballast to hit a PP target, then fine-tune with live feedback. Offline PWA, English and Italian.
+Setup Lab: a free, installable tuning tool designed for Gran Turismo 7 that generates a starting setup. Enter car data, installed parts, tyres, surface, circuit and driving style, plan ECU, restrictor and ballast to hit a PP target, then fine-tune with live feedback. Offline PWA, English and Italian.
 
 Current version: **0.0.0** (see CHANGELOG.md).
 
