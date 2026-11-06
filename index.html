@@ -513,6 +513,10 @@ const cgEst=c=>{let v=clamp((c.weight-1450)/700,-1,1);if(c.asp==='ev')v-=.35;if(
 /* cifre decimali del passo (0.5 -> 1, 0.001 -> 3) */
 const decs=st=>{const t=String(st);return t.includes('e')?6:(t.split('.')[1]||'').length};
 const TF=[1.1,1.2,1.3,1.5,1.6,1.8,3,3.5,4]; /* Hz per classe di gomma: strada 1.1-1.5, racing 3-5 (manuale GT7) */
+/* CAL: costanti empiriche da calibrare con test in gioco (valori di partenza, NON misurati).
+   freqRear: rapporto Hz posteriore/anteriore (Olley: >= 1, tipico reale 1.10-1.20; qui prudente).
+   arbPerLltd: passi di barra per unita' (0-1) di quota di rigidita' a rollio spostata dalle molle (ipotesi: ~0.05 di quota per passo). */
+const CAL={freqRear:1.08,arbPerLltd:20};
 function gen(c,R,INV,lv){
  const tyF=TYRES.find(t=>t.id===c.tyre)||TYRES[4],tyR=TYRES.find(t=>t.id===(c.tyreR||c.tyre))||tyF;
  const gF=tyF.g,gR=tyR.g,g=(gF+gR)/2,L=layoutOf(c),T=TERRAINS[c.terrain],p=c.prof,st=STYLES[c.style];
@@ -527,10 +531,15 @@ function gen(c,R,INV,lv){
  r=clamp(r,-1,1);
  const o={};
  const f0=gi=>(TF[gi]+(pp-600)/400*.35)*T.f*(wet?.9:1)*(1-.08*p.bump)*(1+.05*cg);
- o.freqF=f0(gF)*Math.sqrt(wf/.5)*(1-r*.05);
- o.freqR=f0(gR)*Math.sqrt(rf/.5)*(1+r*.05)*(FF?1.05:1);
+ /* Frequenze: il gioco chiede Hz, non N/m, e k = m(2*pi*f)^2 e' gia' proporzionale alla massa dell'asse: a parita' di f le molle seguono il peso.
+    (Il vecchio sqrt(wf/.5) irrigidiva ancora l'asse pesante, k ~ wf^2.) Dietro si parte piu' alti (criterio di Olley, planata): CAL.freqRear.
+    Quel bias sposta la rigidita' a rollio verso il posteriore (sfO < wf = tendenza al sovrasterzo): lo scarto dL viene ripreso dalle barre,
+    cosi' il bilanciamento resta quello voluto e cambia solo la planata. Il bias di stile (r) e quello FF restano fuori dalla compensazione. */
+ const sfO=wf/(wf+rf*CAL.freqRear*CAL.freqRear),dL=wf-sfO,dArb=.5*CAL.arbPerLltd*dL;
+ o.freqF=f0(gF)*(1-r*.05);
+ o.freqR=f0(gR)*CAL.freqRear*(1+r*.05)*(FF?1.05:1);
  const a0=gi=>(2+gi*.5)*T.a+1.2*cg;
- o.arbF=a0(gF)-r*1.5; o.arbR=a0(gR)+r*2+(wf-.5)*6+(FF?1:0);
+ o.arbF=a0(gF)-r*1.5+dArb; o.arbR=a0(gR)+r*2+(wf-.5)*6+(FF?1:0)-dArb;
  const ext=f=>clamp((38+(f-1.5)*4)*T.d-4*p.bump,30,60);
  o.extF=ext(o.freqF); o.extR=ext(o.freqR);
  o.compF=clamp((o.extF-10)*.85,20,40); o.compR=clamp((o.extR-10)*.85,20,40);
