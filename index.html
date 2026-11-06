@@ -502,11 +502,14 @@ const IDX=[['os','Sotto / sovrasterzo','bi'],['turn','Risposta in inserimento'],
 const layoutOf=c=>c.drive==='FWD'?'FF':c.drive==='AWD'?'4WD':({F:'FR',M:'MR',R:'RR'})[c.engine];
 const LSD0={FR:[10,35,20],MR:[10,35,25],RR:[12,40,15],FF:[8,25,12],'4WD':[10,35,20]};
 const BB0={FF:1,FR:0,MR:0,RR:-1,'4WD':0};
-/* stima del baricentro (-1 basso, 0 medio, +1 alto): dato non disponibile nel gioco, ricavato da peso, motore e layout (ipotesi) */
+/* segno con cui l'LSD in accelerazione (lsdA) sposta il bilanciamento: +1 = piu' bloccaggio, piu' sovrasterzo (trazione posteriore o integrale);
+   su trazione anteriore il differenziale piu' chiuso tira dritto: piu' bloccaggio = piu' sottosterzo (come nel testo della guida). Unica fonte per gen, effects e applyFix */
+const LSDA_SIGN={FF:-1,FR:1,MR:1,RR:1,'4WD':1};
+/* stima del baricentro (-1 basso, 0 medio, +1 alto): dato non disponibile nel gioco, ricavato da peso, aspirazione e posizione del motore (ipotesi) */
 /* stabilita' letta come numero tra -1 e +1: entro +-0.2 neutra, negativo = tendenza al sottosterzo (us), positivo = tendenza al sovrasterzo (os) */
 const STAB_N=.2;
 const stabClass=v=>{const x=parseFloat(String(v).replace(',','.'));if(!isFinite(x))return '';return x<-STAB_N?'us':x>STAB_N?'os':'mid'};
-const cgEst=(c,L)=>{let v=clamp((c.weight-1450)/700,-1,1);if(c.asp==='ev')v-=.35;if(c.engine==='M')v-=.25;return clamp(v,-1,1)};
+const cgEst=c=>{let v=clamp((c.weight-1450)/700,-1,1);if(c.asp==='ev')v-=.35;if(c.engine==='M')v-=.25;return clamp(v,-1,1)};
 /* cifre decimali del passo (0.5 -> 1, 0.001 -> 3) */
 const decs=st=>{const t=String(st);return t.includes('e')?6:(t.split('.')[1]||'').length};
 const TF=[1.1,1.2,1.3,1.5,1.6,1.8,3,3.5,4]; /* Hz per classe di gomma: strada 1.1-1.5, racing 3-5 (manuale GT7) */
@@ -514,7 +517,7 @@ function gen(c,R,INV,lv){
  const tyF=TYRES.find(t=>t.id===c.tyre)||TYRES[4],tyR=TYRES.find(t=>t.id===(c.tyreR||c.tyre))||tyF;
  const gF=tyF.g,gR=tyR.g,g=(gF+gR)/2,L=layoutOf(c),T=TERRAINS[c.terrain],p=c.prof,st=STYLES[c.style];
  const wf=c.wf/100,rf=1-wf,FF=L==='FF',pp=c.pp,wet=tyF.wet||tyR.wet;
- const cg=c.cg==='auto'||c.cg==null?cgEst(c,L):{low:-1,mid:0,high:1}[c.cg];
+ const cg=c.cg==='auto'||c.cg==null?cgEst(c):{low:-1,mid:0,high:1}[c.cg];
  let r=st.r+.35*(p.tech-p.fast)+({F:.1,M:-.1,R:-.15})[c.engine];
  /* dati del banner di GT7 (opzionali): stabilita' alta = si puo' chiedere piu' rotazione; poca rotazione a bassa velocita' = piu' rotazione */
  const sv=x=>({us:1,mid:0,os:-1})[x]||0,sL=sv(c.stabL),sH=sv(c.stabH);
@@ -538,7 +541,7 @@ function gen(c,R,INV,lv){
  o.rhF=80+rhf*60; o.rhR=80+clamp(rhf+.04-.03*r,0,1)*60;
  const [i0,a1,b0]=LSD0[L], nmt=(c.torque||c.power*1.3)/c.weight*1000;
  o.lsdI=(i0+clamp((nmt-250)/100,0,6)+(c.asp==='ev'?3:c.asp==='turbo'?1:0))*T.li;
- o.lsdA=(a1+5*r+st.la+(c.asp==='ev'?-4:0))*T.la;
+ o.lsdA=(a1+LSDA_SIGN[L]*5*r+st.la+(c.asp==='ev'?-4:0))*T.la;
  o.lsdB=b0-6*r+4*p.brake;
  o.fI=5*T.li; o.fA=10*T.la; o.fB=5; o.split=30-5*r+(T.bb?3:0);
  o.bb=BB0[L]+Math.round(-r*1.2)+T.bb+Math.round(.5*p.brake-.25);
@@ -573,12 +576,13 @@ function biasOf(c,L,g,r){
  return {os:LB[L]+r*30, turn:50+r*15, stab:58-r*20, trac:LT[L]+T.grip/3, brk:55, grip:20+g*7+T.grip};
 }
 function effects(c,S,B,R,INV,bias){
- const e={os:0,turn:0,stab:0,trac:0,brk:0,grip:0},G=.8;
+ const e={os:0,turn:0,stab:0,trac:0,brk:0,grip:0},G=.8,sgA=LSDA_SIGN[layoutOf(c)]||1;
  for(const k in S){
   const w=FX[k]; if(!w||B[k]==null)continue;
-  const u=R[k]; let d=(S[k]-B[k])/((u.max-u.min)||1);
+  /* i pesi di FX sono per variazione dell'intero span di riferimento PK[k].r, non dei limiti modificabili dall'utente */
+  const [a0,b0]=PK[k].r; let d=(S[k]-B[k])/((b0-a0)||1);
   if(invOf(PK[k],INV))d=-d;
-  for(const x in w)e[x]+=w[x]*d*100*G;
+  for(const x in w)e[x]+=(k==='lsdA'&&x==='os'?sgA:1)*w[x]*d*100*G;
  }
  const out={};
  for(const x in e)out[x]=clamp(bias[x]+e[x],0,100);
@@ -871,6 +875,7 @@ const GR=[
 const IL={rh:['Altezza da terra','rh'],arb:['Barra antirollio','arb'],comp:['Compressione','comp'],ext:['Estensione','ext'],freq:['Frequenza naturale','freq'],
  cam:['Campanatura','camber'],toe:['Convergenza (toe)','toe'],lsdI:['Coppia iniziale','lsdI'],lsdA:['Sensibilità accelerazione','lsdA'],lsdB:['Sensibilità frenata','lsdB'],
  fI:['Ant. coppia iniziale','lsdI'],fA:['Ant. sensibilità accelerazione','lsdA'],fB:['Ant. sensibilità frenata','lsdB'],split:['Coppia all\'anteriore','split'],bb:['Bilanciamento freni','bb'],df:['Carico aerodinamico','df'],ts:['Velocità massima (cambio)','ts'],rsa:['Sterzo posteriore (4WS)','rsa']};
+/* delta in frazione dei limiti dell'utente, nella convenzione interna: toe positivo = toe-out (piu' sovrasterzo), applyFix lo converte con INV.toe */
 const FIXES=[
  ['Sottosterzo in curva',{arbF:-.11,arbR:.11,freqF:-.015,freqR:.015},'In curva'],
  ['Sovrasterzo in curva',{arbF:.11,arbR:-.11,freqF:.015,freqR:-.015},'In curva'],
@@ -884,8 +889,8 @@ const FIXES=[
  ['Sovrasterzo in uscita',{lsdA:-.09,arbR:-.11,_s:1},'Frenata e uscita'],
  ['Poca trazione in uscita',{lsdI:.05,lsdA:.08,arbR:-.05,compR:-.04},'Frenata e uscita'],
  ['Sottosterzo ad alta velocità',{dfF:.1,dfR:-.05,camF:.02},'Alta velocità'],
- ['Sovrasterzo ad alta velocità',{dfR:.1,dfF:-.05,toeR:.01},'Alta velocità'],
- ['Instabile ad alta velocità',{dfR:.08,dfF:.03,toeR:.015,rhR:-.03},'Alta velocità'],
+ ['Sovrasterzo ad alta velocità',{dfR:.1,dfF:-.05,toeR:-.01},'Alta velocità'],
+ ['Instabile ad alta velocità',{dfR:.08,dfF:.03,toeR:-.015,rhR:-.03},'Alta velocità'],
  ['Instabile su dossi e cordoli',{freqF:-.02,freqR:-.02,extF:-.07,extR:-.07,rhF:.08,rhR:.08},'Fondo e sospensioni'],
  ['Troppo rigida sui cordoli',{compF:-.08,compR:-.08,extF:-.06,extR:-.06,freqF:-.03,freqR:-.03},'Fondo e sospensioni'],
  ['Tocca il fondo',{rhF:.1,rhR:.1,freqF:.03,freqR:.03},'Fondo e sospensioni']];
@@ -1031,7 +1036,7 @@ function paintFixes(){
  $('#fixes').innerHTML=cats.map(c=>`<div class="fgroup"><div class="fgl">${T(c)}</div><div class="fgc">${FIXES.map((f,i)=>f[2]===c?`<button type="button" class="chip" data-fx="${i}">${T(f[0])}</button>`:'').join('')}</div></div>`).join('');
 }
 function applyFix(i){
- const [n,d]=FIXES[i],s=meta.L==='FF'?-1:1;
+ const [n,d]=FIXES[i],s=LSDA_SIGN[meta.L]||1;
  for(const k in d){if(k==='_s'||!(k in S))continue;
   const u=R[k];let dt=d[k];if(d._s&&k==='lsdA')dt*=s;if(invOf(PK[k],INV))dt=-dt;
   setVal(k,S[k]+dt*(u.max-u.min));}

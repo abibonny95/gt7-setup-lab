@@ -53,7 +53,11 @@ const PARTS = {
   minimal: { gears: 6, inst: { susp: 'none', lsd: false, tv: false, aero: false, brk: false, trans: false, ws: false } },
   /* stress dell'ordinamento marce: tutti i rapporti con lo stesso range (limiti inseriti a mano) + profilo a rettilinei lunghi.
      Con i range di default la correzione "le marce devono scendere" non scatta mai: senza questa variante non verrebbe provata. */
-  flatgears: { gears: 8, inst: FULL, flat: true, circuit: 'monza' } };
+  flatgears: { gears: 8, inst: FULL, flat: true, circuit: 'monza' },
+  /* limiti modificati dall'utente (stretti per frequenza e barre, larghi per altezza e LSD): rende misurabile
+     ogni dipendenza delle barre effetti o del generatore dai range editabili invece che da quelli di riferimento */
+  customrng: { gears: 6, inst: FULL, rng: { freqF: [1.5, 3, .01], freqR: [1.5, 3, .01], rhF: [60, 200, 1], rhR: [60, 200, 1],
+    arbF: [1, 5, 1], arbR: [1, 5, 1], lsdA: [10, 100, 1], camF: [0, 10, .1], camR: [0, 10, .1] } } };
 const FXK = ['os', 'turn', 'stab', 'trac', 'brk', 'grip'];
 
 const isNum = x => typeof x === 'number' && isFinite(x);
@@ -68,6 +72,7 @@ function runCase(E, lay, wf, tyres, terr, pn) {
   const carE = E.effCar(car, { ecu: 100, rst: 100, bal: 0, balp: 0 });
   const R = { ...E.defRanges(), ...E.gearDefaults(pt.gears) };   /* come fa l'app quando cambia nGears */
   if (pt.flat) for (let i = 1; i <= 10; i++) R['g' + i] = { min: 1, max: 4, step: .001 };
+  if (pt.rng) for (const k in pt.rng) R[k] = { min: pt.rng[k][0], max: pt.rng[k][1], step: pt.rng[k][2] };
   const INV = { toe: true, bb: false }, lv = { dfF: null, dfR: null, ts: null, rsa: null };
   let g;
   try { g = E.gen(carE, R, INV, lv) } catch (x) { return { errs: [['eccezione', 'gen(): ' + x.message]] } }
@@ -122,7 +127,10 @@ function compare(oldC, newC) {
       else if (x !== y) d = Infinity;
       if (d == null) continue;
       changed.add(key);
-      const e = byParam[p] || (byParam[p] = { n: 0, max: 0, ex: key }); e.n++; if (d > e.max) { e.max = d; e.ex = key }
+      /* profilo con limiti dell'utente separato dagli altri: distingue dipendenze dai range editabili da cambi del modello */
+      const pk = (key.endsWith('|customrng') ? '[limiti utente] ' : '') + p;
+      const e = byParam[pk] || (byParam[pk] = { n: 0, max: 0, ex: key, lays: new Set(), parts: new Set() }); e.n++; if (d > e.max) { e.max = d; e.ex = key }
+      const kp = key.split('|'); e.lays.add(kp[0]); e.parts.add(kp[4]);
     }
   }
   return { added, removed, changed: [...changed], byParam };
@@ -162,8 +170,8 @@ function main() {
     code |= 2;
     console.log(`\nSNAPSHOT DIVERSO: ${c.changed.length} configurazioni cambiate, ${c.added.length} nuove, ${c.removed.length} rimosse`);
     const rows = Object.entries(c.byParam).sort((a, b) => b[1].max - a[1].max).slice(0, 25);
-    console.log('  parametro            casi   max|delta|   esempio');
-    for (const [p, e] of rows) console.log('  ' + p.padEnd(20) + String(e.n).padStart(5) + '  ' + (isFinite(e.max) ? e.max.toPrecision(3) : 'cambio struttura').padStart(12) + '   ' + e.ex);
+    console.log('  parametro            casi   max|delta|   layout | profili');
+    for (const [p, e] of rows) console.log('  ' + p.padEnd(20) + String(e.n).padStart(5) + '  ' + (isFinite(e.max) ? e.max.toPrecision(3) : 'cambio struttura').padStart(12) + '   ' + [...e.lays].join(',') + ' | ' + [...e.parts].join(','));
     if (Object.keys(c.byParam).length > 25) console.log(`  ... altri ${Object.keys(c.byParam).length - 25} parametri`);
     console.log('Se le differenze sono volute: node tools/safety-net.js --update');
   }
