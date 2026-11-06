@@ -501,7 +501,6 @@ const IDX=[['os','Sotto / sovrasterzo','bi'],['turn','Risposta in inserimento'],
 /* ===== MOTORE ===== */
 const layoutOf=c=>c.drive==='FWD'?'FF':c.drive==='AWD'?'4WD':({F:'FR',M:'MR',R:'RR'})[c.engine];
 const LSD0={FR:[10,35,20],MR:[10,35,25],RR:[12,40,15],FF:[8,25,12],'4WD':[10,35,20]};
-const BB0={FF:1,FR:0,MR:0,RR:-1,'4WD':0};
 /* segno con cui l'LSD in accelerazione (lsdA) sposta il bilanciamento: +1 = piu' bloccaggio, piu' sovrasterzo (trazione posteriore o integrale);
    su trazione anteriore il differenziale piu' chiuso tira dritto: piu' bloccaggio = piu' sottosterzo (come nel testo della guida). Unica fonte per gen, effects e applyFix */
 const LSDA_SIGN={FF:-1,FR:1,MR:1,RR:1,'4WD':1};
@@ -516,7 +515,11 @@ const TF=[1.1,1.2,1.3,1.5,1.6,1.8,3,3.5,4]; /* Hz per classe di gomma: strada 1.
 /* CAL: costanti empiriche da calibrare con test in gioco (valori di partenza, NON misurati).
    freqRear: rapporto Hz posteriore/anteriore (Olley: >= 1, tipico reale 1.10-1.20; qui prudente).
    arbPerLltd: passi di barra per unita' (0-1) di quota di rigidita' a rollio spostata dalle molle (ipotesi: ~0.05 di quota per passo). */
-const CAL={freqRear:1.08,arbPerLltd:20};
+/* Freni (bb, positivo = piu' freno davanti): il bias ideale segue la distribuzione statica piu' il trasferimento di carico in frenata (h/L * decelerazione).
+   bbWf: passi per unita' di wf (0-1) rispetto a 50:50, ricavato dai vecchi offset per layout (FF 60:40 -> +1, RR 40:60 -> -1).
+   bbCg: passi per unita' di baricentro stimato (-1..+1): piu' alto = piu' trasferimento sull'anteriore (h/L +-0.05 a ~1.2 g).
+   Ipotesi: lo zero del gioco e' trattato come "neutro per 50:50 e baricentro medio"; se e' gia' tarato sull'auto, i due termini vanno ridotti. */
+const CAL={freqRear:1.08,arbPerLltd:20,bbWf:10,bbCg:.6};
 function gen(c,R,INV,lv){
  const tyF=TYRES.find(t=>t.id===c.tyre)||TYRES[4],tyR=TYRES.find(t=>t.id===(c.tyreR||c.tyre))||tyF;
  const gF=tyF.g,gR=tyR.g,g=(gF+gR)/2,L=layoutOf(c),T=TERRAINS[c.terrain],p=c.prof,st=STYLES[c.style];
@@ -553,7 +556,7 @@ function gen(c,R,INV,lv){
  o.lsdA=(a1+LSDA_SIGN[L]*5*r+st.la+(c.asp==='ev'?-4:0))*T.la;
  o.lsdB=b0-6*r+4*p.brake;
  o.fI=5*T.li; o.fA=10*T.la; o.fB=5; o.split=30-5*r+(T.bb?3:0);
- o.bb=BB0[L]+Math.round(-r*1.2)+T.bb+Math.round(.5*p.brake-.25);
+ o.bb=CAL.bbWf*(wf-.5)+CAL.bbCg*cg-1.2*r+T.bb; /* continuo: lo snap al passo avviene una sola volta, nel ciclo di conversione sul range */
  o.dfF=40+8*r+30*p.fast-35*p.str+10*Math.max(0,-hiSlope); o.dfR=55-15*r+30*p.fast-35*p.str-10*sH;
  o.ts=150+250*clamp(.45+.5*p.str-.3*p.tech+.1*p.fast,.1,.95);
  o.rsa=100*clamp(.3+.4*p.tech-.3*p.fast+.2*r,0,1);
@@ -800,9 +803,9 @@ const INFO=[
  x:['Serve il differenziale centrale a vettorizzazione. Alcune auto (per esempio con sistemi ATTESA o AYC) rendono meglio con la regolazione originale.','Requires the torque-vectoring center differential. Some cars (for example with ATTESA or AYC systems) work best with the original setting.']},
 {id:'bb',t:['Bilanciamento freni','Front/rear brake balance'],
  w:['Regola in tempo reale il rapporto tra freni anteriori e posteriori. Serve il controller del bilanciamento freni.','Adjusts the balance between front and rear brakes in real time. Requires the brake balance controller.'],
- u:['Il manuale ufficiale dice: più efficacia davanti rende più facile sovrasterzare frenando in curva; più efficacia dietro rende più facile sottosterzare.','The official manual says: more front effectiveness makes it easier to oversteer while braking in a corner; more rear effectiveness makes it easier to understeer.'],
- d:['Verso il posteriore: più rischio di bloccare le ruote dietro in frenata.','Toward the rear: more risk of locking the rear wheels under braking.'],
- x:['Questa indicazione è l\'opposto di ciò che accade di solito in pista. Verifica con una prova: frena in curva con due valori e osserva. Il segno positivo/negativo si inverte nelle opzioni.','This is the opposite of what usually happens on track. Verify with a test: brake in a corner with two values and watch. The positive/negative sign can be flipped in the options.']},
+ u:['Più freno davanti (positivo, di default): auto più stabile in frenata e meno rotazione in ingresso curva; rischio di bloccare l\'anteriore.','More front brake (positive, default): a more stable car under braking and less rotation on corner entry; risk of locking the front.'],
+ d:['Più freno dietro: più rotazione in ingresso curva, ma più rischio di bloccare il posteriore e perdere stabilità.','More rear brake: more rotation on corner entry, but more risk of locking the rear and losing stability.'],
+ x:['Questo è il verso usato dal modello dell\'app: non è verificato in GT7. Frena in curva con due valori e osserva; se il risultato è opposto, spunta l\'inversione del segno negli intervalli. Il valore di partenza tiene conto di ripartizione dei pesi e baricentro.','This is the direction the app\'s model uses: it is not verified in GT7. Brake in a corner with two values and watch; if the result is opposite, tick the sign inversion in the ranges section. The starting value accounts for weight distribution and center of gravity.']},
 {id:'df',t:['Deportanza','Downforce'],
  w:['Regola la forza con cui il flusso d\'aria schiaccia l\'auto sull\'asfalto, anteriore e posteriore.','Adjusts how hard the airflow pushes the car onto the track, front and rear.'],
  u:['Più alta: più deportanza e più grip nelle curve veloci, ma la velocità massima cala.','Higher: more downforce and more grip in fast corners, but top speed drops.'],
