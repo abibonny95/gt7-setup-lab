@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Setup Lab - audit del segno delle Correzioni rapide (FIXES).
-   Per ogni layout applica ogni correzione con la stessa formula di applyFix() (delta in frazione dei limiti, inversione del toe,
+   Per ogni layout applica ogni correzione con la stessa formula di applyFix() (delta in frazione dello span di riferimento PK[k].r, inversione del toe,
    segno di lsdA per layout, arrotondamento al passo e clamp) e controlla che la barra interessata si muova nel verso dichiarato dal nome.
    La variazione e' misurata con bias neutro a 50, perche' per FF e 4WD la barra os parte sotto 0 e il clamp 0-100 la blocca.
    Uso: node tools/fixes-audit.js [--file=percorso/index.html]   Uscita: 0 ok, 1 verso sbagliato, 8 errore. */
@@ -27,7 +27,9 @@ function main() {
     'Instabile ad alta velocità': ['stab', 1] };
   /* contraddizioni note tra FIXES e pesi di FX, da risolvere con una decisione di modello (non sono bug di segno certi): non fanno fallire il controllo */
   const OPEN = new Set(['Instabile ad alta velocità|rhR']);   /* la correzione abbassa rhR, ma FX.rhR ha stab:+.2 (rhR piu' alto = piu' stabile) */
-  const INV = { toe: true, bb: true }, R = X.defRanges(), b50 = { os: 50, turn: 50, stab: 50, trac: 50, brk: 50, grip: 50 }, bad = [], opp = [], open = [], notes = [];
+  const INV = { toe: true, bb: true }, R = X.defRanges(), b50 = { os: 50, turn: 50, stab: 50, trac: 50, brk: 50, grip: 50 }, bad = [], opp = [], open = [], notes = [], rdep = [];
+  /* limiti dell'utente allargati (x3 attorno al default, stesso passo): se le correzioni dipendessero dai limiti, le variazioni delle barre cambierebbero */
+  const Rw = {}; for (const k in R) { const h = R[k].max - R[k].min; Rw[k] = { min: R[k].min - h, max: R[k].max + h, step: R[k].step } }
   let n = 0;
   for (const lay in LAY) {
     const car = { name: 't', engine: LAY[lay][0], drive: LAY[lay][1], weight: 1100, wf: 52, stabL: '', stabH: '', rotL: 0, rotM: 0, rotH: 0, power: 250, torque: 300,
@@ -42,9 +44,9 @@ function main() {
       if (!EXP[name]) continue;
       const S = { ...g.S }, B = { ...g.S }, [idx, want] = EXP[name];
       /* applica un singolo parametro della correzione come fa applyFix; ritorna la variazione della barra bersaglio */
-      const step1 = (T, k) => {
-        const u = R[k]; let dt = d[k]; if (d._s && k === 'lsdA') dt *= sgn; if (X.invOf(X.PK[k], INV)) dt = -dt;
-        T[k] = +X.clamp(Math.round((T[k] + dt * (u.max - u.min)) / u.step) * u.step, u.min, u.max).toFixed(X.decs(u.step));
+      const step1 = (T, k, Rx = R) => {
+        const u = Rx[k]; let dt = d[k]; if (d._s && k === 'lsdA') dt *= sgn; if (X.invOf(X.PK[k], INV)) dt = -dt;
+        T[k] = +X.clamp(Math.round((T[k] + dt * (X.PK[k].r[1] - X.PK[k].r[0])) / u.step) * u.step, u.min, u.max).toFixed(X.decs(u.step));
       };
       const e0 = X.effects(carE, B, B, R, INV, b50);
       for (const k in d) {
@@ -55,14 +57,18 @@ function main() {
         if (dk * want < -1e-9) (OPEN.has(name + '|' + k) ? open : opp).push(`${lay.padEnd(4)} ${name}: ${k} spinge ${idx} ${dk >= 0 ? '+' : ''}${dk.toFixed(2)} (atteso ${want > 0 ? 'su' : 'giu'})`);
       }
       const e1 = X.effects(carE, S, B, R, INV, b50), delta = e1[idx] - e0[idx];
+      const Sw = { ...g.S }; for (const k in d) { if (k === '_s' || !(k in Sw)) continue; step1(Sw, k, Rw) }
+      const dw = X.effects(carE, Sw, B, Rw, INV, b50)[idx] - e0[idx];
+      if (Math.abs(dw - delta) > 1e-6) rdep.push(`${lay.padEnd(4)} ${name}: ${idx} ${delta.toFixed(3)} con i limiti di default, ${dw.toFixed(3)} con limiti allargati`);
       n++; if (!(delta * want > 1e-9)) bad.push(`${lay.padEnd(4)} ${name}: ${idx} ${delta >= 0 ? '+' : ''}${delta.toFixed(2)} (atteso ${want > 0 ? 'su' : 'giu'})`);
     }
   }
-  console.log(`Correzioni controllate: ${n} | verso netto sbagliato: ${bad.length} | componenti contrarie: ${opp.length} | note aperte: ${open.length} | sintassi <script>: OK`);
+  console.log(`Correzioni controllate: ${n} | verso netto sbagliato: ${bad.length} | componenti contrarie: ${opp.length} | dipendenti dai limiti utente: ${rdep.length} | note aperte: ${open.length} | sintassi <script>: OK`);
   bad.forEach(s => console.log('  SBAGLIATO  ' + s));
   opp.forEach(s => console.log('  CONTRARIA  ' + s));
+  rdep.forEach(s => console.log('  DIPENDE DAI LIMITI  ' + s));
   open.forEach(s => console.log('  APERTA     ' + s));
   notes.forEach(s => console.log('  NOTA  ' + s));
-  return bad.length || opp.length ? 1 : 0;
+  return bad.length || opp.length || rdep.length ? 1 : 0;
 }
 try { process.exitCode = main() } catch (x) { console.error('ERRORE:', x.message); process.exitCode = 8 }

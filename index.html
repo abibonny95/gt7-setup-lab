@@ -892,7 +892,7 @@ const GR=[
 const IL={rh:['Altezza da terra','rh'],arb:['Barra antirollio','arb'],comp:['Compressione','comp'],ext:['Estensione','ext'],freq:['Frequenza naturale','freq'],
  cam:['Campanatura','camber'],toe:['Convergenza (toe)','toe'],lsdI:['Coppia iniziale','lsdI'],lsdA:['Sensibilità accelerazione','lsdA'],lsdB:['Sensibilità frenata','lsdB'],
  fI:['Ant. coppia iniziale','lsdI'],fA:['Ant. sensibilità accelerazione','lsdA'],fB:['Ant. sensibilità frenata','lsdB'],split:['Coppia all\'anteriore','split'],bb:['Bilanciamento freni','bb'],df:['Carico aerodinamico','df'],ts:['Velocità massima (cambio)','ts'],rsa:['Sterzo posteriore (4WS)','rsa']};
-/* delta in frazione dei limiti dell'utente, nella convenzione interna: toe positivo = toe-out (piu' sovrasterzo), applyFix lo converte con INV.toe */
+/* delta in frazione dello span di riferimento PK[k].r (non dei limiti dell'utente), nella convenzione interna: toe positivo = toe-out (piu' sovrasterzo), applyFix lo converte con INV.toe */
 const FIXES=[
  ['Sottosterzo in curva',{arbF:-.11,arbR:.11,freqF:-.015,freqR:.015},'In curva'],
  ['Sovrasterzo in curva',{arbF:.11,arbR:-.11,freqF:.015,freqR:-.015},'In curva'],
@@ -1074,8 +1074,9 @@ function paintFixes(){
 function applyFix(i){
  const [n,d]=FIXES[i],s=LSDA_SIGN[meta.L]||1;
  for(const k in d){if(k==='_s'||!(k in S))continue;
-  const u=R[k];let dt=d[k];if(d._s&&k==='lsdA')dt*=s;if(invOf(PK[k],INV))dt=-dt;
-  setVal(k,S[k]+dt*(u.max-u.min));}
+  const [a0,b0]=PK[k].r;let dt=d[k];if(d._s&&k==='lsdA')dt*=s;if(invOf(PK[k],INV))dt=-dt;
+  /* span di riferimento, come in effects(): la stessa correzione sposta sempre la stessa quantita' fisica, qualunque limite abbia impostato l'utente (setVal applica passo e limiti) */
+  setVal(k,S[k]+dt*(b0-a0));}
  toast(tr('Applicato: ','Applied: ')+T(n));
 }
 /* quando cambia un limite, i valori già presenti mantengono la posizione relativa nel nuovo range */
