@@ -513,13 +513,14 @@ const cgEst=c=>{let v=clamp((c.weight-1450)/700,-1,1);if(c.asp==='ev')v-=.35;if(
 const decs=st=>{const t=String(st);return t.includes('e')?6:(t.split('.')[1]||'').length};
 const TF=[1.1,1.2,1.3,1.5,1.6,1.8,3,3.5,4]; /* Hz per classe di gomma: strada 1.1-1.5, racing 3-5 (manuale GT7) */
 /* CAL: costanti empiriche da calibrare con test in gioco (valori di partenza, NON misurati).
-   freqRear: rapporto Hz posteriore/anteriore (Olley: >= 1, tipico reale 1.10-1.20; qui prudente).
+   freqRear: rapporto Hz posteriore/anteriore. Il manuale GT7 dice che abbinare le frequenze anteriore e posteriore rende la guida piu' fluida:
+   si parte da 1.00 (la fonte documentale prevale sulla regola Olley, reale 1.10-1.20); con valori > 1 la rigidita' a rollio ceduta viene ripresa dalle barre.
    arbPerLltd: passi di barra per unita' (0-1) di quota di rigidita' a rollio spostata dalle molle (ipotesi: ~0.05 di quota per passo). */
 /* Freni (bb in convenzione interna: positivo = piu' freno davanti; il segno mostrato in GT7 e' opposto e si ottiene con INV.bb): il bias ideale segue la distribuzione statica piu' il trasferimento di carico in frenata (h/L * decelerazione).
    bbWf: passi per unita' di wf (0-1) rispetto a 50:50, ricavato dai vecchi offset per layout (FF 60:40 -> +1, RR 40:60 -> -1).
    bbCg: passi per unita' di baricentro stimato (-1..+1): piu' alto = piu' trasferimento sull'anteriore (h/L +-0.05 a ~1.2 g).
    Ipotesi: lo zero del gioco e' trattato come "neutro per 50:50 e baricentro medio"; se e' gia' tarato sull'auto, i due termini vanno ridotti. */
-const CAL={freqRear:1.08,arbPerLltd:20,bbWf:10,bbCg:.6};
+const CAL={freqRear:1,arbPerLltd:20,bbWf:10,bbCg:.6};
 function gen(c,R,INV,lv){
  const tyF=TYRES.find(t=>t.id===c.tyre)||TYRES[4],tyR=TYRES.find(t=>t.id===(c.tyreR||c.tyre))||tyF;
  const gF=tyF.g,gR=tyR.g,g=(gF+gR)/2,L=layoutOf(c),T=TERRAINS[c.terrain],p=c.prof,st=STYLES[c.style];
