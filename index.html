@@ -336,7 +336,7 @@ div.f>span:first-child{display:block}
     <summary>Intervalli del tuo modello</summary>
     <p class="note">Valori di partenza generici. Ogni auto ha limiti propri: guarda min e max nel menu Officina e correggili qui. Il setup viene calcolato come posizione relativa nel range, quindi cambiare i limiti sposta tutto in modo coerente.</p>
     <label class="chk"><input type="checkbox" id="toeInv" checked> Toe: positivo = toe-in (impostazione di default; togli la spunta se i tuoi valori usano il segno opposto)</label>
-    <label class="chk" style="margin-top:8px"><input type="checkbox" id="bbInv"> Bilanciamento freni: positivo = più freno dietro (di default positivo = più freno davanti)</label>
+    <label class="chk" style="margin-top:8px"><input type="checkbox" id="bbInv" checked> Bilanciamento freni: positivo = più freno dietro, come in GT7 (togli la spunta se i tuoi valori usano il segno opposto)</label>
     <div class="rtab h" style="margin-top:12px"><span>Parametro</span><span>Min</span><span>Max</span><span>Passo</span><span>Attuale</span></div>
     <div id="rtab"></div>
     <div style="padding:12px 0 16px"><button class="btn ghost" id="rngReset" type="button">Ripristina valori di partenza</button></div>
@@ -495,7 +495,7 @@ const FX={rhF:{grip:-.3,turn:-.2},rhR:{grip:-.3,stab:.2},
  toeF:{turn:2.4,os:.9,stab:-1.2},toeR:{os:2.4,stab:-3,turn:.6},
  lsdI:{stab:.4,turn:-.5,trac:.4},lsdA:{trac:.7,os:.6,stab:-.3},lsdB:{stab:.7,turn:-.4,brk:.3},
  fI:{turn:-.3,trac:.2},fA:{trac:.5,os:-.4},fB:{stab:.4,turn:-.2},split:{os:-.8,trac:.5,stab:.3},
- bb:{stab:.8,turn:-.6,os:-.3},dfF:{os:.7,grip:.3,turn:.3},dfR:{os:-.7,stab:.7,grip:.3},rsa:{turn:.8,os:.4,stab:-.6}};
+ bb:{stab:-.8,turn:.6,os:.3},dfF:{os:.7,grip:.3,turn:.3},dfR:{os:-.7,stab:.7,grip:.3},rsa:{turn:.8,os:.4,stab:-.6}};
 const IDX=[['os','Sotto / sovrasterzo','bi'],['turn','Risposta in inserimento'],['stab','Stabilità'],['trac','Trazione in uscita'],['brk','Frenata'],['grip','Grip meccanico']];
 
 /* ===== MOTORE ===== */
@@ -515,7 +515,7 @@ const TF=[1.1,1.2,1.3,1.5,1.6,1.8,3,3.5,4]; /* Hz per classe di gomma: strada 1.
 /* CAL: costanti empiriche da calibrare con test in gioco (valori di partenza, NON misurati).
    freqRear: rapporto Hz posteriore/anteriore (Olley: >= 1, tipico reale 1.10-1.20; qui prudente).
    arbPerLltd: passi di barra per unita' (0-1) di quota di rigidita' a rollio spostata dalle molle (ipotesi: ~0.05 di quota per passo). */
-/* Freni (bb, positivo = piu' freno davanti): il bias ideale segue la distribuzione statica piu' il trasferimento di carico in frenata (h/L * decelerazione).
+/* Freni (bb in convenzione interna: positivo = piu' freno davanti; il segno mostrato in GT7 e' opposto e si ottiene con INV.bb): il bias ideale segue la distribuzione statica piu' il trasferimento di carico in frenata (h/L * decelerazione).
    bbWf: passi per unita' di wf (0-1) rispetto a 50:50, ricavato dai vecchi offset per layout (FF 60:40 -> +1, RR 40:60 -> -1).
    bbCg: passi per unita' di baricentro stimato (-1..+1): piu' alto = piu' trasferimento sull'anteriore (h/L +-0.05 a ~1.2 g).
    Ipotesi: lo zero del gioco e' trattato come "neutro per 50:50 e baricentro medio"; se e' gia' tarato sull'auto, i due termini vanno ridotti. */
@@ -556,7 +556,7 @@ function gen(c,R,INV,lv){
  o.lsdA=(a1+LSDA_SIGN[L]*5*r+st.la+(c.asp==='ev'?-4:0))*T.la;
  o.lsdB=b0-6*r+4*p.brake;
  o.fI=5*T.li; o.fA=10*T.la; o.fB=5; o.split=30-5*r+(T.bb?3:0);
- o.bb=CAL.bbWf*(wf-.5)+CAL.bbCg*cg-1.2*r+T.bb; /* continuo: lo snap al passo avviene una sola volta, nel ciclo di conversione sul range */
+ o.bb=CAL.bbWf*(wf-.5)+CAL.bbCg*cg+1.2*r+T.bb; /* continuo: lo snap al passo avviene una sola volta, nel ciclo di conversione sul range */
  o.dfF=40+8*r+30*p.fast-35*p.str+10*Math.max(0,-hiSlope); o.dfR=55-15*r+30*p.fast-35*p.str-10*sH;
  o.ts=150+250*clamp(.45+.5*p.str-.3*p.tech+.1*p.fast,.1,.95);
  o.rsa=100*clamp(.3+.4*p.tech-.3*p.fast+.2*r,0,1);
@@ -679,7 +679,7 @@ const EN={
 'ECU installata (regolazione potenza)':'ECU installed (power adjustment)','Limitatore di potenza installato':'Power restrictor installed','Zavorra installata (peso e posizione)':'Ballast installed (weight and position)',
 'PP attuali: quelli che il gioco mostra con ECU e limitatore al 100% e zavorra a 0 kg. PP target: quelli che vuoi ottenere. La scheda PP calcola come arrivarci.':'Current PP: the value the game shows with ECU and restrictor at 100% and ballast at 0 kg. Target PP: the value you want. The PP tab works out how to get there.',
 'Toe: positivo = toe-in (impostazione di default; togli la spunta se i tuoi valori usano il segno opposto)':'Toe: positive = toe-in (default; untick if your values use the opposite sign)',
-'Bilanciamento freni: positivo = più freno dietro (di default positivo = più freno davanti)':'Brake balance: positive = more rear brake (default: positive = more front brake)',
+'Bilanciamento freni: positivo = più freno dietro, come in GT7 (togli la spunta se i tuoi valori usano il segno opposto)':'Brake balance: positive = more rear brake, as in GT7 (untick if your values use the opposite sign)',
 'Obiettivo PP':'PP target','Attuali':'Current','Target':'Target','Previsti':'Predicted',
 'Strategia':'Strategy','Ripartizione della riduzione':'How to split the reduction','Metodo per ridurre la potenza':'Method to reduce power','Posizione della zavorra':'Ballast position',
 'Calcola piano':'Calculate plan','Piano':'Plan','Verifica PP':'Check PP',
@@ -803,9 +803,9 @@ const INFO=[
  x:['Serve il differenziale centrale a vettorizzazione. Alcune auto (per esempio con sistemi ATTESA o AYC) rendono meglio con la regolazione originale.','Requires the torque-vectoring center differential. Some cars (for example with ATTESA or AYC systems) work best with the original setting.']},
 {id:'bb',t:['Bilanciamento freni','Front/rear brake balance'],
  w:['Regola in tempo reale il rapporto tra freni anteriori e posteriori. Serve il controller del bilanciamento freni.','Adjusts the balance between front and rear brakes in real time. Requires the brake balance controller.'],
- u:['Più freno davanti (positivo, di default): auto più stabile in frenata e meno rotazione in ingresso curva; rischio di bloccare l\'anteriore.','More front brake (positive, default): a more stable car under braking and less rotation on corner entry; risk of locking the front.'],
- d:['Più freno dietro: più rotazione in ingresso curva, ma più rischio di bloccare il posteriore e perdere stabilità.','More rear brake: more rotation on corner entry, but more risk of locking the rear and losing stability.'],
- x:['Questo è il verso usato dal modello dell\'app: non è verificato in GT7. Frena in curva con due valori e osserva; se il risultato è opposto, spunta l\'inversione del segno negli intervalli. Il valore di partenza tiene conto di ripartizione dei pesi e baricentro.','This is the direction the app\'s model uses: it is not verified in GT7. Brake in a corner with two values and watch; if the result is opposite, tick the sign inversion in the ranges section. The starting value accounts for weight distribution and center of gravity.']},
+ u:['Verso i valori positivi (più freno dietro): più facile sottosterzare frenando in curva, ma più rischio di bloccare le ruote posteriori.','Toward positive values (more rear brake): easier to understeer while braking in a corner, but more risk of locking the rear wheels.'],
+ d:['Verso i valori negativi (più freno davanti): più facile sovrasterzare frenando in curva, ma più rischio di bloccare le ruote anteriori.','Toward negative values (more front brake): easier to oversteer while braking in a corner, but more risk of locking the front wheels.'],
+ x:['Secondo il manuale, aumentare l\'efficacia dei freni anteriori rende più facile sovrasterzare frenando in curva e aumentare quella dei posteriori fa lo stesso per il sottosterzo. Nel gioco il segno è − per l\'anteriore e + per il posteriore.','According to the manual, increasing front brake effectiveness makes it easier to oversteer while braking in a corner, and increasing rear effectiveness does the same for understeer. In the game the sign is − for the front and + for the rear.']},
 {id:'df',t:['Deportanza','Downforce'],
  w:['Regola la forza con cui il flusso d\'aria schiaccia l\'auto sull\'asfalto, anteriore e posteriore.','Adjusts how hard the airflow pushes the car onto the track, front and rear.'],
  u:['Più alta: più deportanza e più grip nelle curve veloci, ma la velocità massima cala.','Higher: more downforce and more grip in fast corners, but top speed drops.'],
@@ -891,8 +891,8 @@ const IL={rh:['Altezza da terra','rh'],arb:['Barra antirollio','arb'],comp:['Com
 const FIXES=[
  ['Sottosterzo in curva',{arbF:-.11,arbR:.11,freqF:-.015,freqR:.015},'In curva'],
  ['Sovrasterzo in curva',{arbF:.11,arbR:-.11,freqF:.015,freqR:-.015},'In curva'],
- ['Sottosterzo in ingresso',{camF:.035,toeF:.015,bb:-.1,lsdB:-.09},'In curva'],
- ['Sovrasterzo in rilascio',{bb:.1,lsdB:.09,toeR:-.015},'In curva'],
+ ['Sottosterzo in ingresso',{camF:.035,toeF:.015,bb:.1,lsdB:-.09},'In curva'],
+ ['Sovrasterzo in rilascio',{bb:-.1,lsdB:.09,toeR:-.015},'In curva'],
  ['Poco grip',{camF:.035,camR:.035,compF:-.05,compR:-.05,rhF:-.05,rhR:-.05},'In curva'],
  ['Rolla troppo',{arbF:.07,arbR:.07,freqF:.03,freqR:.03,rhF:-.04,rhR:-.04},'In curva'],
  ['Anteriore si blocca in frenata',{bb:-.12,camF:.02},'Frenata e uscita'],
@@ -909,7 +909,7 @@ const FIXES=[
 const FORM=['stabL','stabH','rotL','rotM','rotH','carName','engine','drive','uW','uP','uT','weight','wf','power','torque','asp','cg','pp','ppNow','tyre','tyreR','susp','nGears'];
 const KEY='setup-lab-v3';
 let st={terrain:'asfalto',style:'neutro',circuit:'spa',prof:{...CIRCUITS.spa.p}};
-let R=defRanges(),INV={toe:true,bb:false},S={},B={},meta={r:0,L:'FR',g:4},car=null,carE=null;
+let R=defRanges(),INV={toe:true,bb:true},S={},B={},meta={r:0,L:'FR',g:4},car=null,carE=null;
 let plan=plDefault(),lam=1,hist=[],opt={share:.6,shareKey:'bil',method:'ecu',pos:'auto'},stale=false,ppState='',lv={dfF:null,dfR:null,ts:null,rsa:null},lvAuto={},cur={};
 let A=null,prevSet=null,calibOs=0,measAt='';
 const CHK=['aero','cEcu','cRst','cBal','cLsd','cTv','cBrk','cTrans','c4ws'];
@@ -930,11 +930,11 @@ const visible=q=>!(q.awd&&meta.L!=='4WD')&&(!car||has(car,q.need))&&(!q.gear||q.
 const fmt=(k,v)=>(+v).toFixed(decs(R[k].step));
 function toast(m,ms){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,ms||2600)}
 function snap(){const f={};FORM.forEach(i=>f[i]=$('#'+i).value);CHK.forEach(i=>f[i]=$('#'+i).checked);
- return {f,st,R,INV,S,B,meta,plan,lam,hist,opt,lv,lvAuto,cur,A,prevSet,measAt}}
+ return {f,st,R,INV,invv:2,S,B,meta,plan,lam,hist,opt,lv,lvAuto,cur,A,prevSet,measAt}}
 function apply(d){
  ['stabL','stabH','rotL','rotM','rotH'].forEach(i=>{if(!(i in d.f))$('#'+i).value=''});if(d.f&&!('cg' in d.f))$('#cg').value='auto';
  Object.entries(d.f).forEach(([i,v])=>{if(CHK.includes(i))$('#'+i).checked=v;else if($('#'+i))$('#'+i).value=v});
- st=d.st;R={...defRanges(),...d.R};INV={...INV,...(d.INV||{})};plan={...plDefault(),...(d.plan||{})};lam=d.lam||1;hist=d.hist||[];opt={...opt,...(d.opt||{})};
+ st=d.st;R={...defRanges(),...d.R};INV={...INV,...(d.INV||{})};if(d.invv!==2)INV.bb=true; /* migrazione: il vecchio default (positivo = anteriore) non corrispondeva a GT7 */ plan={...plDefault(),...(d.plan||{})};lam=d.lam||1;hist=d.hist||[];opt={...opt,...(d.opt||{})};
  lv={dfF:null,dfR:null,ts:null,rsa:null,...(d.lv||{})};lvAuto=d.lvAuto||{};cur=d.cur||{};S=d.S||{};B=d.B||{};meta=d.meta||meta;A=d.A||null;prevSet=d.prevSet||null;measAt=d.measAt||'';
  ['uW','uP','uT'].forEach(i=>{const e=$('#'+i);if(e)e.dataset.prev=e.value});if(typeof syncLayout==='function'){syncLayout();syncWf();stabLab()}
 }

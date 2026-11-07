@@ -73,7 +73,7 @@ function runCase(E, lay, wf, tyres, terr, pn) {
   const R = { ...E.defRanges(), ...E.gearDefaults(pt.gears) };   /* come fa l'app quando cambia nGears */
   if (pt.flat) for (let i = 1; i <= 10; i++) R['g' + i] = { min: 1, max: 4, step: .001 };
   if (pt.rng) for (const k in pt.rng) R[k] = { min: pt.rng[k][0], max: pt.rng[k][1], step: pt.rng[k][2] };
-  const INV = { toe: true, bb: false }, lv = { dfF: null, dfR: null, ts: null, rsa: null };
+  const INV = { toe: true, bb: true }, lv = { dfF: null, dfR: null, ts: null, rsa: null };
   let g;
   try { g = E.gen(carE, R, INV, lv) } catch (x) { return { errs: [['eccezione', 'gen(): ' + x.message]] } }
   if (g.L !== Ly.L) errs.push(['layout', `atteso ${Ly.L}, ottenuto ${g.L}`]);

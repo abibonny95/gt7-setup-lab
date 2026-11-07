@@ -27,7 +27,7 @@ function main() {
     'Instabile ad alta velocità': ['stab', 1] };
   /* contraddizioni note tra FIXES e pesi di FX, da risolvere con una decisione di modello (non sono bug di segno certi): non fanno fallire il controllo */
   const OPEN = new Set(['Instabile ad alta velocità|rhR']);   /* la correzione abbassa rhR, ma FX.rhR ha stab:+.2 (rhR piu' alto = piu' stabile) */
-  const INV = { toe: true, bb: false }, R = X.defRanges(), b50 = { os: 50, turn: 50, stab: 50, trac: 50, brk: 50, grip: 50 }, bad = [], opp = [], open = [], notes = [];
+  const INV = { toe: true, bb: true }, R = X.defRanges(), b50 = { os: 50, turn: 50, stab: 50, trac: 50, brk: 50, grip: 50 }, bad = [], opp = [], open = [], notes = [];
   let n = 0;
   for (const lay in LAY) {
     const car = { name: 't', engine: LAY[lay][0], drive: LAY[lay][1], weight: 1100, wf: 52, stabL: '', stabH: '', rotL: 0, rotM: 0, rotH: 0, power: 250, torque: 300,
