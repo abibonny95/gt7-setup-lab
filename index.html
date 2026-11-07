@@ -121,6 +121,10 @@ input[type=text],input[type=number],select{background:var(--panel2);border:1px s
 .fxpanel.min .fxgrid{display:none}
 /* params */
 .group+.group{margin-top:12px}
+.toeviz{margin-top:10px;text-align:center}.toeviz svg{width:100%;max-width:300px;height:auto;display:block;margin:0 auto}
+.toeviz .tv-car{fill:none;stroke:var(--line);stroke-width:2}.toeviz .tv-whl{fill:var(--accent);stroke:var(--fg);stroke-width:1}
+.toeviz .tv-axis{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}.toeviz text{fill:var(--muted);font:11px var(--body)}
+.toeviz .tv-lab{font-size:12px;fill:var(--fg)}
 .item{padding:12px 0;border-top:1px solid var(--line)}
 .item:first-of-type{border-top:0}
 .ihead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
@@ -987,11 +991,29 @@ function buildGroups(){
    const pair=PK[id+'F'];const first=pair?id+'F':id;
    if(!visible(PK[first]))return '';
    const body=pair?`<div class="pair">${cell(id+'F','Anteriore')}${cell(id+'R','Posteriore')}</div>`:`<div class="one">${cell(id,'Valore')}</div>`;
-   return `<div class="item"><div class="ihead"><span>${T(IL[id][0])}</span><button type="button" class="help" data-h="${IL[id][1]}" aria-label="${tr('Spiegazione','Help')}: ${T(IL[id][0])}">?</button></div>${body}</div>`}).join('');
+   const viz=id==='toe'?'<div class="toeviz" data-toeviz></div>':'';
+   return `<div class="item"><div class="ihead"><span>${T(IL[id][0])}</span><button type="button" class="help" data-h="${IL[id][1]}" aria-label="${tr('Spiegazione','Help')}: ${T(IL[id][0])}">?</button></div>${body}${viz}</div>`}).join('');
   return items.trim()?`<div class="card group"><h2>${T(gn)}</h2>${items}</div>`:'';
  }).join('')+gearGroup();
  Object.keys(S).forEach(paintVal);
 }
+/* vista dall'alto delle ruote: davanti in alto. L'angolo e' esagerato (x20, max 30 gradi) per renderlo leggibile; il verso segue il segno scelto
+   nelle opzioni (INV.toe: true = positivo e' toe-in come in GT7, false = positivo e' toe-out) */
+function toeSvg(){
+ const inward=k=>{const v=+S[k];if(!isFinite(v))return 0;return INV.toe?v:-v};
+ const ang=k=>clamp(inward(k)*20,-30,30);
+ const wh=(x,y,a)=>`<rect class="tv-whl" x="${x-7}" y="${y-17}" width="14" height="34" rx="3" transform="rotate(${a.toFixed(1)} ${x} ${y})"/>`;
+ const lab=k=>{const v=inward(k);return Math.abs(v)<1e-9?tr('parallele','parallel'):v>0?tr('toe-in (verso l\'interno)','toe-in (inward)'):tr('toe-out (verso l\'esterno)','toe-out (outward)')};
+ const fa=ang('toeF'),ra=ang('toeR'),L=70,Rr=170;
+ return `<svg viewBox="0 0 240 170" role="img" aria-label="${tr('Direzione delle ruote viste dall\'alto','Wheel direction seen from above')}">
+  <rect class="tv-car" x="${L+14}" y="30" width="${Rr-L-28}" height="110" rx="26"/><line class="tv-axis" x1="120" y1="8" x2="120" y2="162"/>
+  ${wh(L,42,fa)}${wh(Rr,42,-fa)}${wh(L,128,ra)}${wh(Rr,128,-ra)}
+  <text x="120" y="12" text-anchor="middle">${tr('ANTERIORE','FRONT')} ▲</text>
+  <text class="tv-lab" x="120" y="82" text-anchor="middle">${tr('Ant.','Front')}: ${lab('toeF')}</text>
+  <text class="tv-lab" x="120" y="98" text-anchor="middle">${tr('Post.','Rear')}: ${lab('toeR')}</text>
+  <text x="120" y="166" text-anchor="middle">${tr('angolo esagerato per leggibilità','angle exaggerated for readability')}</text></svg>`;
+}
+function paintToe(){const e=document.querySelector('[data-toeviz]');if(e&&S.toeF!=null&&S.toeR!=null)e.innerHTML=toeSvg()}
 function gearGroup(){
  if(!car||!has(car,'trans'))return '';
  const ng=car.gears||GN0,ks=['fd',...Array.from({length:ng},(_,i)=>'g'+(i+1))].filter(k=>S[k]!=null);
@@ -1008,6 +1030,7 @@ function paintVal(k){
  if(q.pos){const u=R[k],pc=document.querySelector(`[data-pc="${k}"]`);if(pc)pc.textContent=Math.round((S[k]-u.min)/((u.max-u.min)||1)*100)+'% '+tr('del range','of range')}
  const ref=refOf(k),dd=decs(R[k].step),d=+(S[k]-ref.v).toFixed(dd+1),de=document.querySelector(`[data-d="${k}"]`);
  if(de)de.textContent=d?`${d>0?'+':'−'}${Math.abs(d).toFixed(dd)}`:'';
+ if(k==='toeF'||k==='toeR')paintToe();
 }
 function setVal(k,v){
  const u=R[k],q=PK[k];v=clamp(Math.round(v/u.step)*u.step,u.min,u.max);
@@ -1109,7 +1132,7 @@ document.addEventListener('change',e=>{
  if(t.id==='tyre')warnTyre();
  if(t.id==='nGears'){const n=clamp(Math.round(+t.value)||GN0,4,10);t.value=n;R={...R,...gearDefaults(n)};toast(tr('Numero di marce cambiato: range dei rapporti ripristinati. Tocca Genera setup.','Gear count changed: gear ranges reset. Tap Generate setup.'));buildRanges()}
  if(t.id==='bbInv'){INV.bb=t.checked;toast(tr('Segno dei freni cambiato. Tocca Genera setup per ricalcolare.','Brake sign changed. Tap Generate setup to recalculate.'))}
- if(t.id==='toeInv'){INV.toe=t.checked;toast(tr('Segno del toe cambiato. Tocca Genera setup per ricalcolare.','Toe sign changed. Tap Generate setup to recalculate.'))}
+ if(t.id==='toeInv'){INV.toe=t.checked;paintToe();toast(tr('Segno del toe cambiato. Tocca Genera setup per ricalcolare.','Toe sign changed. Tap Generate setup to recalculate.'))}
  if(t.dataset.rk&&t.dataset.f==='cur'){const k=t.dataset.rk,v=parseFloat(t.value);if(isFinite(v))cur[k]=v;else delete cur[k];buildGroups();save();return}
  if(t.dataset.rk){const k=t.dataset.rk,row=t.closest('.rtab'),g=f=>parseFloat(row.querySelector(`[data-f="${f}"]`).value);
   const n={min:g('min'),max:g('max'),step:g('step')};
