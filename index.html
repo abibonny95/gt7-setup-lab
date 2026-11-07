@@ -484,7 +484,9 @@ const PL=[
  {k:'ecu',l:'ECU: potenza',u:'%',r:[50,100,1,0],c:'ecu'},
  {k:'rst',l:'Limitatore di potenza',u:'%',r:[50,100,1,0],c:'rst'},
  {k:'bal',l:'Zavorra: peso',u:'kg',r:[0,200,1,0],c:'bal'},
- {k:'balp',l:'Zavorra: posizione',u:'',r:[-50,50,1,0],c:'bal'}];
+ {k:'balp',l:'Zavorra: posizione',u:'',r:[-50,50,1,0],c:'bal'},
+ /* minimo 40%: tutela di progetto (la leva PP non deve azzerare il carico aero), non un dato di GT7; modificabile negli intervalli */
+ {k:'dfk',l:'Carico aero: quota del suggerito',u:'%',r:[40,100,1,0],c:'aero'}];
 const PLK=Object.fromEntries(PL.map(q=>[q.k,q]));
 const defRanges=()=>({...Object.fromEntries([...P,...PL].map(p=>[p.k,{min:p.r[0],max:p.r[1],step:p.r[2]}])),...gearDefaults(GN0),fd:{min:2,max:6,step:.001}});
 /* segni: true = il valore mostrato è invertito rispetto alla convenzione interna */
@@ -524,7 +526,10 @@ const TF=[1.1,1.2,1.3,1.5,1.6,1.8,3,3.5,4]; /* Hz per classe di gomma: strada 1.
    bbWf: passi per unita' di wf (0-1) rispetto a 50:50, ricavato dai vecchi offset per layout (FF 60:40 -> +1, RR 40:60 -> -1).
    bbCg: passi per unita' di baricentro stimato (-1..+1): piu' alto = piu' trasferimento sull'anteriore (h/L +-0.05 a ~1.2 g).
    Ipotesi: lo zero del gioco e' trattato come "neutro per 50:50 e baricentro medio"; se e' gia' tarato sull'auto, i due termini vanno ridotti. */
-const CAL={freqRear:1,arbPerLltd:20,bbWf:10,bbCg:.6};
+/* Aerodinamica e PP (GT7: piu' deportanza = piu' PP). ppAero: PP che separano deportanza minima e massima (media dei due assi, mossi insieme).
+   0 = non ancora misurato: con 0 l'aero non entra nei PP. Si misura in gioco su un'auto con aero regolabile: PP a deportanza minima e a massima, a parita' di tutto il resto.
+   aeroShare: quota della riduzione PP richiesta affidata all'aero quando l'utente lo usa come leva (ipotesi, non misurata). */
+const CAL={freqRear:1,arbPerLltd:20,bbWf:10,bbCg:.6,ppAero:0,aeroShare:.35};
 function gen(c,R,INV,lv){
  const tyF=TYRES.find(t=>t.id===c.tyre)||TYRES[4],tyR=TYRES.find(t=>t.id===(c.tyreR||c.tyre))||tyF;
  const gF=tyF.g,gR=tyR.g,g=(gF+gR)/2,L=layoutOf(c),T=TERRAINS[c.terrain],p=c.prof,st=STYLES[c.style];
@@ -568,7 +573,9 @@ function gen(c,R,INV,lv){
  /* livelli suggeriti (0..1 nel range di riferimento) e sostituzione con quelli scelti dall'utente */
  const auto={};
  for(const k of LVK){const a=PK[k].r;auto[k]=clamp((o[k]-a[0])/(a[1]-a[0]),0,1);
-  if(lv&&lv[k]!=null)o[k]=a[0]+lv[k]*(a[1]-a[0])}
+  if(lv&&lv[k]!=null)o[k]=a[0]+lv[k]*(a[1]-a[0]);
+  /* leva PP dell'aero: stessa quota su entrambi gli assi, applicata al livello (suggerito o scelto dall'utente); auto[] resta il livello pieno */
+  if((k==='dfF'||k==='dfR')&&c.aeroK!=null&&c.aeroK<1)o[k]=a[0]+(lv&&lv[k]!=null?lv[k]:auto[k])*c.aeroK*(a[1]-a[0])}
  /* cambio: posizione 0..1 nel range (1 = rapporto più corto). Velocità massima alta = rapporti più lunghi */
  const ng=clamp(Math.round(c.gears||GN0),4,10),tsT=clamp((o.ts-150)/250,0,1);
  o.fd=clamp(1-tsT,0,1);
@@ -608,26 +615,56 @@ function effects(c,S,B,R,INV,bias){
 
 /* ===== PIANO PP ===== */
 const KP=1.3,KM=1.0; /* stime iniziali: PP per 1% di potenza e per 1% di peso */
-const plDefault=()=>({ecu:100,rst:100,bal:0,balp:0});
+const plDefault=()=>({ecu:100,rst:100,bal:0,balp:0,dfk:100});
 function effCar(c,pl){
  const ecu=c.comp.ecu?pl.ecu/100:1,rst=c.comp.rst?pl.rst/100:1;
  const bal=c.comp.bal?pl.bal:0,fb=(50-(c.comp.bal?pl.balp:0))/100;
  const me=c.weight+bal,front=c.weight*c.wf/100+bal*fb;
- return {...c,weight:me,wf:clamp(100*front/me,30,70),power:c.power*ecu*rst,torque:c.torque*ecu*Math.sqrt(rst)};
+ /* aeroK: quota del livello aero suggerito (leva del piano PP); 1 se l'aero non e' una leva o il piano non la contiene */
+ const aeroK=c.comp.aero&&pl.dfk!=null?clamp(pl.dfk,0,100)/100:1;
+ return {...c,weight:me,wf:clamp(100*front/me,30,70),power:c.power*ecu*rst,torque:c.torque*ecu*Math.sqrt(rst),aeroK};
 }
 function dModel(c,pl){
  const e=effCar(c,pl);
  return 100*(KP*Math.log(e.power/c.power)-KM*Math.log(e.weight/c.weight));
 }
-const ppPred=(c,pl,lam)=>c.ppNow+lam*dModel(c,pl);
+/* PP e aerodinamica. c.ae = {Rg: limiti utente, base: {dfF,dfR} livelli 0..1 suggeriti o scelti (prima della quota dfk), cur: {dfF,dfR} valori in auto quando sono stati letti i PP attuali}.
+   Livello in auto = posizione nel range dell'utente; senza valore attuale si assume uguale al livello suggerito (contributo zero a dfk=100).
+   Contributo = ppAero * (livello previsto - livello attuale), medio sui due assi. Non viene scalato da lam: viene dalla misura diretta di ppAero.
+   I PP letti nel ciclo di verifica vanno presi con piano e valori aero applicati (altrimenti aggiorna i valori attuali). */
+function aeroMeans(c,pl){
+ const ae=c.ae;if(!ae||!ae.Rg||!has(c,'aero'))return null;
+ const k=c.comp&&c.comp.aero&&pl.dfk!=null?clamp(pl.dfk,0,100)/100:1;let n=0,B=0,C=0;
+ for(const a of ['dfF','dfR']){
+  const b=ae.base&&ae.base[a],u=ae.Rg[a],cv=ae.cur&&ae.cur[a];
+  if(typeof b!=='number'||!isFinite(b)||!u)continue;
+  const span=u.max-u.min;
+  B+=b;C+=typeof cv==='number'&&isFinite(cv)&&span>0?clamp((cv-u.min)/span,0,1):b;n++;
+ }
+ return n?{k,B:B/n,C:C/n}:null;
+}
+function dAero(c,pl){
+ const m=CAL.ppAero?aeroMeans(c,pl):null;
+ return m?CAL.ppAero*(m.B*m.k-m.C):0;
+}
+const ppPred=(c,pl,lam)=>c.ppNow+lam*dModel(c,pl)+dAero(c,pl);
 function calibrate(c,pl,obs,lam){
  const d=dModel(c,pl);
- return Math.abs(d)<.5?lam:clamp((obs-c.ppNow)/d,.2,5);
+ return Math.abs(d)<.5?lam:clamp((obs-c.ppNow-dAero(c,pl))/d,.2,5);
 }
 /* opt: {share: quota di riduzione affidata alla potenza 0..1, method:'ecu'|'rst', pos:'auto'|'man'} */
 function solvePlan(c,pl,lam,opt,Rg){
  const out=plDefault();out.balp=pl.balp;
- const gap=c.pp-c.ppNow;
+ /* l'aero del setup suggerito conta comunque nel bilancio PP; solo se l'utente lo sceglie diventa anche una leva (opt.aero==='use') */
+ let gap=c.pp-c.ppNow-dAero(c,out);
+ if(opt.aero==='use'&&c.comp.aero&&CAL.ppAero>0&&gap<-.5&&Rg.dfk){
+  const m=aeroMeans(c,out);
+  if(m&&m.B>1e-6){
+   const target=dAero(c,out)+clamp(CAL.aeroShare,0,1)*gap;       /* contributo aero voluto, <= quello a dfk 100 */
+   out.dfk=clamp(Math.round(100*(target/CAL.ppAero+m.C)/m.B),Rg.dfk.min,100);
+   gap=c.pp-c.ppNow-dAero(c,out);
+  }
+ }
  if(gap>-.5)return {plan:out,state:gap>.5?'up':'ok',left:gap};
  const key=(opt.method==='rst'&&c.comp.rst)||(opt.method==='ecu'&&!c.comp.ecu&&c.comp.rst)?'rst':'ecu';
  const hasP=key==='ecu'?c.comp.ecu:c.comp.rst,hasW=c.comp.bal;
@@ -674,7 +711,7 @@ const EN={
 'Il tuner regola solo ciò che la tua auto può regolare. Togli la spunta alle parti che non hai montato.':'The tuner only adjusts what your car can adjust. Untick the parts you have not fitted.',
 'Completamente regolabili':'Fully customizable','Solo altezza regolabile':'Height adjustable only','Non regolabili':'Not adjustable',
 'Differenziale completamente regolabile':'Fully customizable differential','Differenziale centrale a vettorizzazione (solo integrale)':'Torque-vectoring center differential (AWD only)',
-'Aerodinamica regolabile':'Adjustable aerodynamics','Controller del bilanciamento freni':'Brake balance controller','Cambio completamente regolabile':'Fully customizable transmission','Sterzo integrale 4WS':'4WS four-wheel steering',
+'Aerodinamica regolabile':'Adjustable aerodynamics','Carico aero: quota del suggerito':'Downforce: share of suggested','Controller del bilanciamento freni':'Brake balance controller','Cambio completamente regolabile':'Fully customizable transmission','Sterzo integrale 4WS':'4WS four-wheel steering',
 'ECU completamente regolabile':'Fully customizable ECU','Limitatore di potenza':'Power restrictor','Zavorra':'Ballast',
 'Cambio e sterzo':'Transmission and steering','Strumento indipendente e non ufficiale.':'Independent, unofficial tool.','Numero di marce':'Number of gears','Rapporto finale':'Final drive','Velocità massima e rapporti':'Top speed and gear ratios','Livelli desiderati':'Desired levels','Parametri di cui il tuner non può stimare l\'effetto. Lascia Auto per il livello consigliato o scegli tu quanto spingere.':'Parameters whose effect the tuner cannot estimate. Leave Auto for the suggested level or choose how hard to push.',
 'Attuale':'Current','Schede salvate':'Saved sheets','Salva questa scheda':'Save this sheet','Esporta':'Export','Importa':'Import','Apri la guida completa':'Open the full guide',
@@ -846,6 +883,11 @@ const INFO=[
  u:['Più alto: più potenza e più PP.','Higher: more power and more PP.'],
  d:['Più basso: meno potenza di punta e meno PP.','Lower: less peak power and fewer PP.'],
  x:['Taglia soprattutto la potenza ai regimi alti, quindi perdi più velocità massima che accelerazione.','It mostly cuts high-rev power, so you lose more top speed than acceleration.']},
+{id:'dfk',t:['Carico aero: quota del suggerito','Downforce: share of suggested'],
+ w:['Quota del livello di deportanza suggerito che il setup usa (100% = tutto). Serve a recuperare PP senza toccare potenza e peso: più deportanza = più PP.','Share of the suggested downforce level the setup uses (100% = all of it). It recovers PP without touching power or weight: more downforce = more PP.'],
+ u:['Più alta: più deportanza (e più PP), meno velocità massima.','Higher: more downforce (and more PP), less top speed.'],
+ d:['Più bassa: meno PP, più velocità massima, meno grip nelle curve veloci.','Lower: fewer PP, more top speed, less grip in fast corners.'],
+ x:['L\'effetto sui PP dipende dal coefficiente misurato in gioco (non ancora calibrato: finché è zero l\'aero non entra nei PP stimati). Per il calcolo vale il valore attuale che inserisci negli intervalli.','The PP effect depends on the coefficient measured in game (not calibrated yet: while it is zero downforce does not enter the PP estimate). The calculation uses the current value you enter in the ranges section.']},
 {id:'bal',t:['Zavorra: peso','Ballast: weight'],
  w:['Regola il peso della zavorra a bordo. Serve per rispettare un peso minimo e per avvicinare due auto con caratteristiche diverse.','Adjusts the weight of ballast carried by the car. Useful for meeting minimum weight and for bringing two cars of different character closer together.'],
  u:['Più alto: più peso, meno PP, accelerazione e frenata peggiori.','Higher: more weight, fewer PP, worse acceleration and braking.'],
@@ -915,7 +957,7 @@ const FORM=['stabL','stabH','rotL','rotM','rotH','carName','engine','drive','uW'
 const KEY='setup-lab-v3';
 let st={terrain:'asfalto',style:'neutro',circuit:'spa',prof:{...CIRCUITS.spa.p}};
 let R=defRanges(),INV={toe:true,bb:true},S={},B={},meta={r:0,L:'FR',g:4},car=null,carE=null;
-let plan=plDefault(),lam=1,hist=[],opt={share:.6,shareKey:'bil',method:'ecu',pos:'auto'},stale=false,ppState='',lv={dfF:null,dfR:null,ts:null,rsa:null},lvAuto={},cur={};
+let plan=plDefault(),lam=1,hist=[],opt={share:.6,shareKey:'bil',method:'ecu',pos:'auto',aero:'off'},stale=false,ppState='',lv={dfF:null,dfR:null,ts:null,rsa:null},lvAuto={},cur={};
 let A=null,prevSet=null,calibOs=0,measAt='';
 const CHK=['aero','cEcu','cRst','cBal','cLsd','cTv','cBrk','cTrans','c4ws'];
 
@@ -923,13 +965,15 @@ const CHK=['aero','cEcu','cRst','cBal','cLsd','cTv','cBrk','cTrans','c4ws'];
 const parseWf=v=>{const m=String(v).replace(',','.').match(/(\d+(?:\.\d+)?)\s*[:\/\-]\s*(\d+(?:\.\d+)?)/);let a=m?(+m[1])/((+m[1])+(+m[2]))*100:parseFloat(String(v).replace(',','.'));return isFinite(a)?+clamp(a,30,70).toFixed(2):52};
 const num=(id,d,a,b,u)=>{const v=parseFloat($('#'+id).value)*(u||1);return isFinite(v)?clamp(v,a,b):d};
 const unitF=id=>(typeof UF==='undefined'?1:UF[$('#'+id).value]||1);
+/* contesto aero per il modello PP: limiti dell'utente, livelli base (scelti o suggeriti) e valori attuali inseriti (negli intervalli) */
+const aeroCtx=()=>({Rg:R,base:{dfF:lv.dfF!=null?lv.dfF:lvAuto.dfF,dfR:lv.dfR!=null?lv.dfR:lvAuto.dfR},cur:{dfF:cur.dfF,dfR:cur.dfR}});
 function readCar(){
  return {name:$('#carName').value.trim()||tr('Senza nome','Unnamed'),engine:$('#engine').value,drive:$('#drive').value,
   weight:num('weight',1100,300,4000,unitF('uW')),wf:parseWf($('#wf').value),stabL:stabClass($('#stabL').value),stabH:stabClass($('#stabH').value),rotL:+$('#rotL').value||0,rotM:+$('#rotM').value||0,rotH:+$('#rotH').value||0,power:num('power',250,20,3000,unitF('uP')),torque:num('torque',300,20,4000,unitF('uT')),
   asp:$('#asp').value,cg:$('#cg').value,pp:num('pp',600,100,1500),ppNow:num('ppNow',650,100,1500),gears:Math.round(num('nGears',6,4,10)),tyre:$('#tyre').value,tyreR:$('#tyreR').value||$('#tyre').value,aero:$('#aero').checked,
   inst:{susp:$('#susp').value,lsd:$('#cLsd').checked,tv:$('#cTv').checked,aero:$('#aero').checked,brk:$('#cBrk').checked,trans:$('#cTrans').checked,ws:$('#c4ws').checked},
-  comp:{ecu:$('#cEcu').checked,rst:$('#cRst').checked,bal:$('#cBal').checked},
-  terrain:st.terrain,style:st.style,prof:{...st.prof}};
+  comp:{ecu:$('#cEcu').checked,rst:$('#cRst').checked,bal:$('#cBal').checked,aero:$('#aero').checked},
+  terrain:st.terrain,style:st.style,prof:{...st.prof},ae:aeroCtx()};
 }
 const visible=q=>!(q.awd&&meta.L!=='4WD')&&(!car||has(car,q.need))&&(!q.gear||q.gear<=((car&&car.gears)||GN0));
 const fmt=(k,v)=>(+v).toFixed(decs(R[k].step));
@@ -1094,7 +1138,7 @@ function refOf(k){
 }
 function regenerate(show){
  if(Object.keys(S).length)prevSet={S:{...S},B:{...B},plan:{...plan},lv:{...lv}};
- car=readCar();carE=effCar(car,plan);const g=gen(carE,R,INV,lv);lvAuto=g.auto;S=g.S;B={...g.S};meta={r:g.r,L:g.L,g:g.g};stale=false;
+ car=readCar();carE=effCar(car,plan);const g=gen(carE,R,INV,lv);lvAuto=g.auto;car.ae=aeroCtx();S=g.S;B={...g.S};meta={r:g.r,L:g.L,g:g.g};stale=false;
  $('#hdrCar').textContent=car.name;
  buildRanges();buildGroups();buildLevels();paintFx();paintTips();renderPP();save();
  if(show){tab('setup');toast(tr('Setup rigenerato con le nuove impostazioni. Il precedente è salvato: puoi ripristinarlo.','Setup regenerated with the new settings. The previous one is saved: you can restore it.'),4200)}
@@ -1348,7 +1392,7 @@ function renderPP(){
   `<p class="hint">${tr('Fattore di correzione stimato','Estimated correction factor')}: ×${lam.toFixed(2)}</p>`:'';
  ppChoices();paintPP();
 }
-const optNow=()=>({share:opt.share,method:opt.method,pos:opt.pos});
+const optNow=()=>({share:opt.share,method:opt.method,pos:opt.pos,aero:opt.aero});
 function solve(){
  refreshCar();const r=solvePlan(car,plan,lam,optNow(),R);
  plan=r.plan;ppState=r.state==='ok'?'':r.state;stale=true;renderPP();save();
